@@ -51,7 +51,9 @@ int main(int argc, char* argv[]) {
    char *ap;
    unsigned char rfid[IDSIZE];
 
-   // *** Config ***
+   // ****************************************************
+   // Read config frome "/home/pi/myConfig" and argv
+   // ****************************************************
    char config[2][30];
    if (argc != 3) readConfig("/home/pi/myConfig", config); 
 	else {
@@ -59,6 +61,9 @@ int main(int argc, char* argv[]) {
 		strcpy(config[1], argv[2]);
 	}
 	
+   // ****************************************************
+   // Stroe RDID into rfid[] (a character array)
+   // ****************************************************
 	ap = config[0];
 	for (i = 0, ap = config[0]; i < IDSIZE; i++,ap++) {
 		rfid[i] = strtoul(ap,&ap,16);
@@ -66,7 +71,9 @@ int main(int argc, char* argv[]) {
 	gpio = atoi(config[1]);
 	fprintf(stdout, "RFID:%s, GPIO:%d\n",config[0] , gpio); 
 
-   // *** Setup ***
+   // ****************************************************
+   // Initiate the RPi and SPI
+   // ****************************************************
    if (wiringPiSetupSys() < 0) {
       fprintf(stderr, "Failed to setup wiringPi\n");
       exit(EXIT_FAILURE);
@@ -76,7 +83,9 @@ int main(int argc, char* argv[]) {
       fprintf(stderr, "Failed to open SPI device\n");
       exit(EXIT_FAILURE);
    }
-   // clear potentially pending HW interrupts
+   // ****************************************************
+   // Clear potential pending HW interrupts
+   // ****************************************************
    if(waitForInterrupt(gpio, 1) < 0) { // wait for GPIO_25
       fprintf(stderr, "Failed to wait on HW interrupt\n");
       exit(EXIT_FAILURE);
@@ -89,9 +98,12 @@ int main(int argc, char* argv[]) {
 	exit(EXIT_FAILURE);
    }*/
    
+   // ****************************************************
+   // Start rfm69 with RX mode, pass RFID as argument
+   // ****************************************************
    if (rfm69startRxMode(rfid)) {
    	fprintf(stdout, "Failed to enter RX Mode\n");
-	exit(EXIT_FAILURE);
+	   exit(EXIT_FAILURE);
    }
 
    /*
