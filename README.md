@@ -17,9 +17,10 @@ it from its 5V power supply - ready to boot it up again via above triggers.
 ## rfwait <I>[localRFID] [GPIO]</I>
 
 `rfwait`: Put the transceiver on RFM69 into DRX mode. 
+
 In that mode the hardware signal goes up upon reception of `localRFID` and thus generates a hardware
 wakeup event to RPI.
-:::Warn Even though it called "wait", it won't hang.
+Even though it called "wait", it won't hang.
 
 `GPIO` is the number of the GPIO in Broadcom SoC nomenclature routed to the
 corresponding P1 pin the RFM69's wakeup interrupt hardware signal is connected to.
