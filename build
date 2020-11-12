@@ -17,7 +17,7 @@ echo [... building $i]
 g++ -c $i.c -lWiringPi
 
 # compile c code
-for i in rfrespond rfwait; do
+for i in rfrespond rfwait getStatus; do
     echo [... installing $i];
     g++ $i.c rfm69bios.o -o $i -lwiringPi;
     chown root:root $i;

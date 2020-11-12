@@ -24,7 +24,8 @@ of the License, or (at your option) any later version.
 #endif
 
 #define LogDIR "/home/pi/Desktop/log/"
-
+#define roundDIR "/home/pi/Desktop/log/round"
+#define startDIR "/home/pi/Desktop/log/startwakekime"
 void readConfig(char const *fileName, char clist[2][30])
 {
     FILE *file = fopen(fileName, "r");
@@ -98,7 +99,14 @@ int main(int argc, char* argv[]) {
    
    fprintf(stdout, "Local RFID:%s, GPIO:%d\n",config[0] , gpio); 
    fprintf(stdout, "Wake Remote RFID:%s\n",argv[1]); 
-
+   std::fstream startWakeTime;
+   std::fstream roundCount;
+   startWakeTime.open(startDIR, std::fstream::in | std::fstream::out);
+   roundCount.open(roundDIR, std::fstream::in | std::fstream::out);
+   int round;
+   roundCount >> round; 
+   startWakeTime << "Start rfwake at: " << round << "\t" << toTime(std::chrono::system_clock::now());
+   
    // *** Setup ***
    if (wiringPiSetupSys() < 0) {
       fprintf(stderr, "Failed to setup wiringPi\n");
@@ -120,7 +128,7 @@ int main(int argc, char* argv[]) {
       // write Tx data
       rfm69txdata(&remrfid[IDSIZE-1],1);
       rfm69txdata(locrfid,IDSIZE);
-      // wait for HW interrupt(s) and check for TX_Sent state, takes approx. 853.3µs
+      // wait for HW interrupt(s) and check for TX_Sent state, takes approx. 853.3ï¿½s
       do {
          if(waitForInterrupt(gpio, 1) <= 0) { // wait for GPIO_xx
             fprintf(stderr, "Failed to wait on TX interrupt\n");
@@ -177,19 +185,23 @@ int main(int argc, char* argv[]) {
 	    // write into log file
 	    auto now = std::chrono::system_clock::now();
 	    std::fstream flog;
+         std::fstream roundCount;
 	    char str[30]={0};
 	    //memset(str, 0, sizeof str);
 	    for (i = 0; i < IDSIZE; i++) {
-		char temp[3];
+		   char temp[3];
 	    	sprintf(temp, "%02x", recrfid[i]);
-		strcat(str, temp);
-		if (i != IDSIZE-1) 
+		   strcat(str, temp);
+		   if (i != IDSIZE-1) 
 		    strcat(str, ":");
 	    }
 	    std::string logfname(str);
 	    //std::cout << logfname;
-            flog.open (LogDIR + logfname + ".log", std::fstream::in | std::fstream::out | std::fstream::app);
-	    flog << "ACK received at:\t\t\t" << read_gps() << "\t" << toTime(now);
+      flog.open (LogDIR + logfname + ".log", std::fstream::in | std::fstream::out | std::fstream::app);
+      
+	    flog << "ACK received at: " << round << "\t" << toTime(now);
+
+	   //  flog << "ACK received at:\t\t\t" << read_gps() << "\t" << toTime(now);
 	    flog.close();
 
             if (!gotyou) delay(1); // wait long enough if wrong RF ID received

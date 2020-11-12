@@ -25,7 +25,8 @@
 #endif
 
 #define LogDIR "/home/pi/Desktop/log/"
-
+#define roundDIR "/home/pi/Desktop/log/round"
+#define startDIR "/home/pi/Desktop/log/startwakekime"
 struct Target {
 	char rem[30];	
 	unsigned char remrfid[IDSIZE];
@@ -121,13 +122,16 @@ int main(int argc, char* argv[]) {
 	// *** Config ***
 	char config[2][30];
 
-	if (argc == 1) {	// case: rfwakes
-		readConfig("/home/pi/myConfig", config); 
-		Targetlist = readTargets();
-	} else {  		// other case
-		fprintf(stderr, "Usage: rfwakes\n");
+	if (argc != 2)
+	{  		
+		fprintf(stderr, "Usage: rfwakes round\n");
 		exit(EXIT_FAILURE);
-	}
+	} 
+	
+	readConfig("/home/pi/myConfig", config); 
+	Targetlist = readTargets();
+	
+
 	for (i = 0, ap = config[0]; i < IDSIZE; i++, ap++) {
 		locrfid[i] = strtoul(ap,&ap,16);
 	}
@@ -142,6 +146,17 @@ int main(int argc, char* argv[]) {
 	//-----------------------------------------------------------------------
 
 	fprintf(stdout, "Local RFID:%s, GPIO:%d\n",config[0] , gpio); 
+	std::fstream startWakeTime;
+	// std::fstream roundCount;
+	startWakeTime.open(startDIR, std::fstream::in | std::fstream::out | std::fstream::app);
+	// roundCount.open(roundDIR, std::fstream::in | std::fstream::out);
+	int round = atoi(argv[1]);
+	// roundCount >> round; 
+	startWakeTime << "Start rfwakes at: " << round << "\t" << toTime(std::chrono::system_clock::now());
+	startWakeTime.close();
+	fprintf(stdout, "Local RFID:%s, GPIO:%d\n",config[0] , gpio); 
+	std::cout << "Start rfwakes at: " <<  round << "\t" << toTime(std::chrono::system_clock::now());
+	// fprintf(stdout, "Start rfwakes at: %d\t",config[0] , gpio); 
 
 	//for (int i = 0, a1p = Targetlist[0].rem; i < IDSIZE; i++, a1p++) {
 	//	t.remrfid[i] = strtoul(a1p,&a1p,16);
@@ -187,7 +202,7 @@ int main(int argc, char* argv[]) {
 			// write Tx data
 			rfm69txdata(&remrfid[IDSIZE-1],1);
 			rfm69txdata(locrfid,IDSIZE);
-			// wait for HW interrupt(s) and check for TX_Sent state, takes approx. 853.3µs
+			// wait for HW interrupt(s) and check for TX_Sent state, takes approx. 853.3ï¿½s
 			do {
 				if(waitForInterrupt(gpio, 1) <= 0) { // wait for GPIO_xx
 					fprintf(stderr, "Failed to wait on TX interrupt\n");
@@ -255,9 +270,10 @@ int main(int argc, char* argv[]) {
 				// write into log file
 				auto now = std::chrono::system_clock::now();
 				std::fstream flog;
-				std::string logfname(it->rem);
-				flog.open (LogDIR + logfname + ".log", std::fstream::in | std::fstream::out | std::fstream::app);
-				flog << "ACK receive at:\t\t\t" << read_gps() << "\t" << toTime(now);
+				std::string name("ack_time");
+				flog.open (LogDIR + name + ".log", std::fstream::in | std::fstream::out | std::fstream::app);	    	
+			
+				flog << recrfid << "," << round << ", " << toTime(now) << "\r\t" << fflush;
 				flog.close();
 				// recover `gotyou` switch
 				gotyou = 0;

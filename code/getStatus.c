@@ -53,7 +53,8 @@ int main(int argc, char* argv[]) {
 
 	// *** Config ***
 	char config[2][30];
-	if (argc != 3) readConfig("/home/pi/myConfig", config); 
+	char configName[] = "/home/pi/myConfig";
+	if (argc != 3) readConfig(configName, config); 
 	else {
 		strcpy(config[0], argv[1]);
 		strcpy(config[1], argv[2]);
