@@ -273,7 +273,7 @@ int main(int argc, char* argv[]) {
 				std::string name("ack_time");
 				flog.open (LogDIR + name + ".log", std::fstream::in | std::fstream::out | std::fstream::app);	    	
 			
-				flog << recrfid << "," << round << ", " << toTime(now) << "\r\t" << fflush;
+				flog << recrfid << "," << round << ", " << toTime(now) << "\r\n" << fflush;
 				flog.close();
 				// recover `gotyou` switch
 				gotyou = 0;
