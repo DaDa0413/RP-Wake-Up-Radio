@@ -26,7 +26,7 @@
 
 #define LogDIR "/home/pi/Desktop/log/"
 #define roundDIR "/home/pi/Desktop/log/round"
-#define startDIR "/home/pi/Desktop/log/startwakekime"
+#define startPATH "/home/pi/Desktop/log/startWakeTime.csv"
 struct Target {
 	char rem[30];	
 	unsigned char remrfid[IDSIZE];
@@ -148,11 +148,11 @@ int main(int argc, char* argv[]) {
 	fprintf(stdout, "Local RFID:%s, GPIO:%d\n",config[0] , gpio); 
 	std::fstream startWakeTime;
 	// std::fstream roundCount;
-	startWakeTime.open(startDIR, std::fstream::in | std::fstream::out | std::fstream::app);
+	startWakeTime.open(startPATH, std::fstream::in | std::fstream::out | std::fstream::app);
 	// roundCount.open(roundDIR, std::fstream::in | std::fstream::out);
 	int round = atoi(argv[1]);
 	// roundCount >> round; 
-	startWakeTime << "Start rfwakes at: " << round << "\t" << toTime(std::chrono::system_clock::now());
+	startWakeTime << round << ",\"" << toTime(std::chrono::system_clock::now()) << "\"\r\n";
 	startWakeTime.close();
 	fprintf(stdout, "Local RFID:%s, GPIO:%d\n",config[0] , gpio); 
 	std::cout << "Start rfwakes at: " <<  round << "\t" << toTime(std::chrono::system_clock::now());
@@ -261,22 +261,28 @@ int main(int argc, char* argv[]) {
 				++it;
 			}
 			else {
-				it = Targetlist.erase(it);
 				// output of remote RF ID
 				fprintf(stdout, "ACK received from called Station RF ID ");
 				printrfid(recrfid);
 				fprintf(stdout,"\n");
+
+				// char buf[9];
+				// memcpy(buf, recrfid, 8);	
+				// buf[8] = '\0';	
+				// std::string str(buf);	
+				// std::cout << "Daniel:"  << r << std::endl;	
 				
 				// write into log file
 				auto now = std::chrono::system_clock::now();
 				std::fstream flog;
 				std::string name("ack_time");
-				flog.open (LogDIR + name + ".log", std::fstream::in | std::fstream::out | std::fstream::app);	    	
+				flog.open (LogDIR + name + ".csv", std::fstream::in | std::fstream::out | std::fstream::app);	    	
 			
-				flog << recrfid << "," << round << ", " << toTime(now) << "\r\n" << fflush;
+				flog << it->rem << "," << round << ",\"" << toTime(now) << "\"\r\n";
 				flog.close();
 				// recover `gotyou` switch
 				gotyou = 0;
+				it = Targetlist.erase(it);
 			}
 		}
 	} while(!Targetlist.empty());
