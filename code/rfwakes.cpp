@@ -64,8 +64,8 @@ void readConfig(char const *fileName, char clist[2][30])
 	fclose(file);
 }
 
-std::vector <Target> readTargets(){
-	FILE *file = fopen("/home/pi/targetlist", "r");
+std::vector <Target> readTargets(char* targetFName){
+	FILE *file = fopen(targetFName, "r");
 	std::vector <Target> tlist;
 	char item[30] = {};
 	int c;
@@ -122,14 +122,27 @@ int main(int argc, char* argv[]) {
 	// *** Config ***
 	char config[2][30];
 
-	if (argc != 2)
+	char targetFName[256];
+	if (argc == 3)
 	{  		
-		fprintf(stderr, "Usage: rfwakes round\n");
+		fprintf(stdout, "Now Usage: rfwakes fName round\n");
+		strcpy(targetFName, "/home/pi/targetlist");
+	}
+	else if (argc == 4)
+	{  		
+		fprintf(stdout, "Now Usage: rfwakes fName round targetFile\n");
+		strcpy(targetFName, "/home/pi/");
+		strcat(targetFName, argv[3]);
+
+	}
+	else
+	{  		
+		fprintf(stdout, "[ERROR] Usage: rfwakes fName round [targetFile]\n");
 		exit(EXIT_FAILURE);
-	} 
+	}
 	
 	readConfig("/home/pi/myConfig", config); 
-	Targetlist = readTargets();
+	Targetlist = readTargets(targetFName);
 	
 
 	for (i = 0, ap = config[0]; i < IDSIZE; i++, ap++) {
