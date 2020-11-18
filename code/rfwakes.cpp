@@ -97,9 +97,20 @@ void printrfid(unsigned char rfid[]) {
 	}
 }
 
+// char* toTime(std::chrono::system_clock::time_point target) {
+// 	time_t temp = std::chrono::system_clock::to_time_t(target);
+// 	char* result = ctime(&temp);
+// 	return result;
+// }
+
 char* toTime(std::chrono::system_clock::time_point target) {
 	time_t temp = std::chrono::system_clock::to_time_t(target);
 	char* result = ctime(&temp);
+	for (char *ptr = result; *ptr != '\0'; ptr++)
+	{
+		if (*ptr == '\n' || *ptr == '\r')
+			*ptr = '\0';
+	}
 	return result;
 }
 
@@ -202,6 +213,7 @@ int main(int argc, char* argv[]) {
 		exit(EXIT_FAILURE);
 	}
 
+	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
 	do {
 		for (auto it = Targetlist.begin(); it != Targetlist.end();) {
 			unsigned char remrfid[IDSIZE];
@@ -278,20 +290,17 @@ int main(int argc, char* argv[]) {
 				fprintf(stdout, "ACK received from called Station RF ID ");
 				printrfid(recrfid);
 				fprintf(stdout,"\n");
-
-				// char buf[9];
-				// memcpy(buf, recrfid, 8);	
-				// buf[8] = '\0';	
-				// std::string str(buf);	
-				// std::cout << "Daniel:"  << r << std::endl;	
 				
 				// write into log file
-				auto now = std::chrono::system_clock::now();
 				std::fstream flog;
-				std::string name(argv[1]);
+				std::string name = std::string("ack_") + argv[1];
 				flog.open (LogDIR + name + ".csv", std::fstream::in | std::fstream::out | std::fstream::app);	    	
-			
-				flog << it->rem << "," << round << ",\"" << toTime(now) << "\"\r\n";
+
+				auto now = std::chrono::system_clock::now();
+				std::chrono::duration<double> elapsed_seconds = now-startTime;
+
+				flog << "\"" << it->rem << "\"," << round << ",\"" << toTime(now) << "\",\"" 
+			<< toTime(startTime) << "\"," << elapsed_seconds.count() <<" \r\n";
 				flog.close();
 				// recover `gotyou` switch
 				gotyou = 0;
