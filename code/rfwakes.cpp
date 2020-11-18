@@ -159,15 +159,15 @@ int main(int argc, char* argv[]) {
 	//-----------------------------------------------------------------------
 
 	fprintf(stdout, "Local RFID:%s, GPIO:%d\n",config[0] , gpio); 
-	std::fstream startWakeTime;
+	// std::fstream startWakeTime;
 	// std::fstream roundCount;
-	startWakeTime.open(startPATH, std::fstream::in | std::fstream::out | std::fstream::app);
+	// startWakeTime.open(startPATH, std::fstream::in | std::fstream::out | std::fstream::app);
 	// roundCount.open(roundDIR, std::fstream::in | std::fstream::out);
-	int round = atoi(argv[1]);
 	// roundCount >> round; 
-	startWakeTime << round << ",\"" << toTime(std::chrono::system_clock::now()) << "\"\r\n";
-	startWakeTime.close();
+	// startWakeTime << round << ",\"" << toTime(std::chrono::system_clock::now()) << "\"\r\n";
+	// startWakeTime.close();
 	fprintf(stdout, "Local RFID:%s, GPIO:%d\n",config[0] , gpio); 
+	int round = atoi(argv[2]);
 	std::cout << "Start rfwakes at: " <<  round << "\t" << toTime(std::chrono::system_clock::now());
 	// fprintf(stdout, "Start rfwakes at: %d\t",config[0] , gpio); 
 
@@ -288,7 +288,7 @@ int main(int argc, char* argv[]) {
 				// write into log file
 				auto now = std::chrono::system_clock::now();
 				std::fstream flog;
-				std::string name("ack_time");
+				std::string name(argv[1]);
 				flog.open (LogDIR + name + ".csv", std::fstream::in | std::fstream::out | std::fstream::app);	    	
 			
 				flog << it->rem << "," << round << ",\"" << toTime(now) << "\"\r\n";
