@@ -147,7 +147,7 @@ int main(int argc, char* argv[]) {
 		rfm69txdata(&remrfid[IDSIZE-1],1); // write last byte of remote RF ID
 		rfm69txdata(locrfid,IDSIZE); // write complete local RF ID
 		// wait for HW interrupt(s) and check for TX_Sent state, takes approx. 853.3µs
-		if (wiringPiISR(0, INT_EDGE_RISING, &myInterrupt0) < 0)
+		if (wiringPiISR(gpio, INT_EDGE_RISING, &myInterrupt0) < 0)
 		{
 			// if(waitForInterrupt(gpio, 1) <= 0) { // wait for GPIO_xx
 			fprintf(fdlog, "Failed to wait for TX interrupt\n");
@@ -196,7 +196,7 @@ int main(int argc, char* argv[]) {
 			exit(EXIT_FAILURE);
 		}
 		// wait for HW interrupt(s) and check for CRC_Ok state
-		if (wiringPiISR(0, INT_EDGE_RISING, &myInterrupt1) < 0)
+		if (wiringPiISR(gpio, INT_EDGE_RISING, &myInterrupt1) < 0)
 		{
 			fprintf(fdlog, "Failed to wait for RX interrupt\n");
 			fprintf(stdout, "Failed to wait for RX interrupt\n");
@@ -237,7 +237,7 @@ int main(int argc, char* argv[]) {
 		rfm69txdata(&remrfid[IDSIZE-1],1); // write last byte of remote RF ID
 		rfm69txdata(locrfid,IDSIZE); // write complete local RF ID
 		// wait for HW interrupt(s) and check for TX_Sent state, takes approx. 853.3µs
-		if (wiringPiISR(0, INT_EDGE_RISING, &myInterrupt2) < 0)
+		if (wiringPiISR(gpio, INT_EDGE_RISING, &myInterrupt2) < 0)
 		{
 			// if(waitForInterrupt(gpio, 1) <= 0) { // wait for GPIO_xx
 			fprintf(fdlog, "Failed to wait on sent-interrupt\n");
