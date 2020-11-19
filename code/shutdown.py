@@ -5,7 +5,7 @@ import time
 if not os.geteuid()==0:
     sys.exit("Hint: call me as root")
 
-time.sleep(30) # Wait for "rfresponse" send ACK
+time.sleep(50) # Wait for "rfresponse" send ACK
 
 cmd = "/usr/local/bin/rfwait"
 os.system(cmd)
