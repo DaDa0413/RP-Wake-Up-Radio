@@ -46,16 +46,14 @@ void readConfig(char const *fileName, char clist[2][30])
     strcpy(clist[1], item); 
 }
 
-int intReg0 = 0;
 int intReg1 = 0;
-int intReg2 = 0;
-void myInterrupt0(void) { intReg0 = 1; }
+void myInterrupt0(void) {}
 void myInterrupt1(void) { intReg1 = 1; }
-void myInterrupt2(void) { intReg2 = 1; }
+void myInterrupt2(void) {}
 
 int main(int argc, char* argv[]) {
 	pid_t pid, sid;
-	int fdspi, gpio, i, mode, res, nbr=1;
+	int fdspi, gpio, i, mode, nbr=1;
 	FILE* fdlog;
 	char *ap;
 	unsigned char locrfid[IDSIZE], remrfid[IDSIZE];
@@ -149,16 +147,15 @@ int main(int argc, char* argv[]) {
 		rfm69txdata(&remrfid[IDSIZE-1],1); // write last byte of remote RF ID
 		rfm69txdata(locrfid,IDSIZE); // write complete local RF ID
 		// wait for HW interrupt(s) and check for TX_Sent state, takes approx. 853.3µs
+		if (wiringPiISR(0, INT_EDGE_RISING, &myInterrupt0) < 0)
+		{
+			// if(waitForInterrupt(gpio, 1) <= 0) { // wait for GPIO_xx
+			fprintf(fdlog, "Failed to wait for TX interrupt\n");
+			fprintf(stdout, "Failed to wait for TX interrupt\n");
+			exit(EXIT_FAILURE);
+		}
 		do {
-			if (wiringPiISR(0, INT_EDGE_RISING, &myInterrupt0) < 0)
-				// if(waitForInterrupt(gpio, 1) <= 0) { // wait for GPIO_xx
-				fprintf(fdlog, "Failed to wait for TX interrupt\n");
-				fprintf(stdout, "Failed to wait for TX interrupt\n");
-				exit(EXIT_FAILURE);
-			}
-			while (intReg0 == 0)
-				usleep(200000);
-			intReg0 = 0;
+				usleep(1000);
 
 			mode = rfm69getState();
 			if (mode < 0) {
@@ -199,20 +196,17 @@ int main(int argc, char* argv[]) {
 			exit(EXIT_FAILURE);
 		}
 		// wait for HW interrupt(s) and check for CRC_Ok state
+		if (wiringPiISR(0, INT_EDGE_RISING, &myInterrupt1) < 0)
+		{
+			fprintf(fdlog, "Failed to wait for RX interrupt\n");
+			fprintf(stdout, "Failed to wait for RX interrupt\n");
+			exit(EXIT_FAILURE);
+		}
 		do {
-			
 			// res = waitForInterrupt(gpio, 86); // wait for GPIO_xx
-			wiringPiISR(0, INT_EDGE_RISING, &myInterrupt1);
-			while (intReg1 == 0)
-				usleep(200000);
-			intReg1 = 0;
-			if (res < 0)
-			{
-				fprintf(fdlog, "Failed to wait for RX interrupt\n");
-				fprintf(stdout, "Failed to wait for RX interrupt\n");
-				exit(EXIT_FAILURE);
-			}
-			else if (res == 0) rfm69restartRx(); // in case of timeout
+			usleep(86000);
+			if (intReg1 == 0)
+				rfm69restartRx();
 			mode = rfm69getState();
 			if (mode < 0) {
 				fprintf(fdlog, "Failed to read RFM69 Status\n");
@@ -220,7 +214,7 @@ int main(int argc, char* argv[]) {
 				exit(EXIT_FAILURE);
 			}
 		} while ((mode & 0x02) == 0);
-
+		intReg1 = 0;
 		// switch back to STDBY Mode
 		if (rfm69STDBYMode()) {
 			fprintf(fdlog, "Failed to enter STDBY Mode\n");
@@ -243,17 +237,15 @@ int main(int argc, char* argv[]) {
 		rfm69txdata(&remrfid[IDSIZE-1],1); // write last byte of remote RF ID
 		rfm69txdata(locrfid,IDSIZE); // write complete local RF ID
 		// wait for HW interrupt(s) and check for TX_Sent state, takes approx. 853.3µs
+		if (wiringPiISR(0, INT_EDGE_RISING, &myInterrupt2) < 0)
+		{
+			// if(waitForInterrupt(gpio, 1) <= 0) { // wait for GPIO_xx
+			fprintf(fdlog, "Failed to wait on sent-interrupt\n");
+			fprintf(stdout, "Failed to wait on sent-interrupt\n");
+			exit(EXIT_FAILURE);
+		}
 		do {
-			if (wiringPiISR(0, INT_EDGE_RISING, &myInterrupt2) < 0)
-			{
-				// if(waitForInterrupt(gpio, 1) <= 0) { // wait for GPIO_xx
-				fprintf(fdlog, "Failed to wait on sent-interrupt\n");
-				fprintf(stdout, "Failed to wait on sent-interrupt\n");
-				exit(EXIT_FAILURE);
-			}
-			while (intReg2 == 0)
-				usleep(200000); // sleep 0.2 second
-			intReg2 = 0;
+			usleep(1000);
 			mode = rfm69getState();
 			if (mode < 0) {
 				fprintf(fdlog, "Failed to read RFM69 Status\n");
