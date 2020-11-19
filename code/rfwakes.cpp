@@ -171,7 +171,7 @@ int main(int argc, char* argv[]) {
 
 	fprintf(stdout, "Local RFID:%s, GPIO:%d\n",config[0] , gpio); 
 	int round = atoi(argv[2]);
-	std::cout << "Start rfwakes at: " <<  round << "\t" << toTime(std::chrono::system_clock::now());
+	std::cout << "Start rfwakes at: " <<  round << " " << toTime(std::chrono::system_clock::now()) << std::endl;
 
 	//for (int i = 0, a1p = Targetlist[0].rem; i < IDSIZE; i++, a1p++) {
 	//	t.remrfid[i] = strtoul(a1p,&a1p,16);
