@@ -55,22 +55,10 @@ int main(int argc, char* argv[]) {
    // Read config frome "/home/pi/myConfig" and argv
    // ****************************************************
    char config[2][30];
-   if (argc != 3) readConfig("/home/pi/myConfig", config); 
-	else {
-		strcpy(config[0], argv[1]);
-		strcpy(config[1], argv[2]);
-	}
-	
-   // ****************************************************
-   // Stroe RDID into rfid[] (a character array)
-   // ****************************************************
-	ap = config[0];
-	for (i = 0, ap = config[0]; i < IDSIZE; i++,ap++) {
-		rfid[i] = strtoul(ap,&ap,16);
-	}
-	gpio = atoi(config[1]);
-	fprintf(stdout, "RFID:%s, GPIO:%d\n",config[0] , gpio); 
-
+   if (argc != 3)
+   {
+      printf("testMode regNum regValue\n");
+   } 
    // ****************************************************
    // Initiate the RPi and SPI
    // ****************************************************
@@ -85,8 +73,9 @@ int main(int argc, char* argv[]) {
    }
 
    unsigned char spibuffer[2];
-   spibuffer[0] = atol(argv[1]) | 0x80; // Address + write cmd bit
-	spibuffer[1] = atol(argv[2]); // RX Mode
+   spibuffer[0] = strtoul(argv[1], NULL, 0) | 0x80; // Address + write cmd bit
+	spibuffer[1] = strtoul(argv[2], NULL, 0); // RX Mode
+   printf("%d %d\n", spibuffer[0], spibuffer[1]);
 	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, 2) < 0) exit(2);
 
    close(fd);
