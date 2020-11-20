@@ -85,8 +85,8 @@ int main(int argc, char* argv[]) {
    }
 
    unsigned char spibuffer[2];
-   spibuffer[0] = 0x01 | 0x80; // Address + write cmd bit
-	spibuffer[1] = 0x10; // RX Mode
+   spibuffer[0] = atol(argv[1]) | 0x80; // Address + write cmd bit
+	spibuffer[1] = atol(argv[2]); // RX Mode
 	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, 2) < 0) exit(2);
 
    close(fd);
