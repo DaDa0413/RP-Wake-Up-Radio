@@ -45,6 +45,7 @@ void readConfig(char const *fileName, char clist[2][30])
     item[n] = '\0';
     strcpy(clist[1], item); 
 }
+void myInterrupt(void) {}
 
 int main(int argc, char* argv[]) {
    int fd, gpio, i;
@@ -86,7 +87,8 @@ int main(int argc, char* argv[]) {
    // ****************************************************
    // Clear potential pending HW interrupts
    // ****************************************************
-   if(waitForInterrupt(gpio, 1) < 0) { // wait for GPIO_25
+   if (wiringPiISR(gpio, INT_EDGE_RISING, &myInterrupt) < 0)
+   {
       fprintf(stderr, "Failed to wait on HW interrupt\n");
       exit(EXIT_FAILURE);
    }
