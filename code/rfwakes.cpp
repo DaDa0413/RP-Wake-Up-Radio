@@ -114,15 +114,9 @@ char* toTime(std::chrono::system_clock::time_point target) {
 	return result;
 }
 
-std::string read_gps() {
-	std::fstream fgps;
-	std::string dir = LogDIR, lat, lng, result;
-	fgps.open(dir + "gps.log", std::fstream::in);
-	fgps >> lat >> lng;
-	result = lat + " " + lng;
-	fgps.close();
-	return result;
-}
+int intReg = 0;
+void myInterrupt0(void) {if (!intReg) intReg = 1;}
+
 
 int main(int argc, char* argv[]) {
 	int fd, gpio, i, mode, res, nbr=1, gotyou=0;
@@ -205,6 +199,11 @@ int main(int argc, char* argv[]) {
 	}
 
 	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
+	if (wiringPiISR(gpio, INT_EDGE_RISING, &myInterrupt0) < 0)
+	{
+		fprintf(stdout, "Failed to set gpio to wiringPiISR\n");
+		exit(EXIT_FAILURE);
+	}
 	do {
 		for (auto it = Targetlist.begin(); it != Targetlist.end();) {
 			unsigned char remrfid[IDSIZE];
@@ -220,10 +219,7 @@ int main(int argc, char* argv[]) {
 			rfm69txdata(locrfid,IDSIZE);
 			// wait for HW interrupt(s) and check for TX_Sent state, takes approx. 853.3�s
 			do {
-				if(waitForInterrupt(gpio, 1) <= 0) { // wait for GPIO_xx
-					fprintf(stderr, "Failed to wait on TX interrupt\n");
-					exit(EXIT_FAILURE);
-				}
+				usleep(1000);
 				mode = rfm69getState();
 				if (mode < 0) {
 					fprintf(stderr, "Failed to read RFM69 Status\n");
@@ -240,17 +236,14 @@ int main(int argc, char* argv[]) {
 
 			// *** Reception ***
 			// prepare for RX
+			intReg = 0;
 			if (rfm69startRxMode(locrfid)) {
 				fprintf(stderr, "Failed to enter RX Mode\n");
 				exit(EXIT_FAILURE);
 			}
 			// wait for HW interrupt(s) and check for CRC_Ok state
-			res = waitForInterrupt(gpio, 84); // wait for GPIO_xx
-			if (res < 0) {
-				fprintf(stderr, "Failed to wait on RX interrupt\n");
-				exit(EXIT_FAILURE);
-			}
-			else if (res > 0) { // in case of reception ...
+			usleep(84000);
+			if (intReg == 1) { // in case of reception ...
 				mode = rfm69getState();
 				if (mode < 0) {
 					fprintf(stderr, "Failed to read RFM69 Status\n");
