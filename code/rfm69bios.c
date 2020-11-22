@@ -25,22 +25,25 @@ const unsigned char initvec[] = {
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,	// 40
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00,	// 48
 };
-
+// Temp not used
 const unsigned char inittst1[] = {
 		0x58 | 0x80, // Address + write cmd bit
 	//	 0/8   1/9   2/A   3/B   4/C   5/D   6/E   7/F
 		0x1B, 0x09,					// 58
 };
+// Temp not used
 const unsigned char inittst2[] = {
 		0x5F | 0x80, // Address + write cmd bit
 	//	 0/8   1/9   2/A   3/B   4/C   5/D   6/E   7/F
 							  0x08,	// 58
 };
+// Fading Margin improvement
 const unsigned char inittst3[] = {
 		0x6F | 0x80, // Address + write cmd bit
 	//	 0/8   1/9   2/A   3/B   4/C   5/D   6/E   7/F
 							  0x30,	// 68
 };
+// Temp not used
 const unsigned char inittst4[] = {
 		0x71 | 0x80, // Address + write cmd bit
 	//	 0/8   1/9   2/A   3/B   4/C   5/D   6/E   7/F
