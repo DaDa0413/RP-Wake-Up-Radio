@@ -104,7 +104,7 @@ int main(int argc, char* argv[]) {
    // Start rfm69 with RX mode, pass RFID as argument
    // ****************************************************
    if (rfm69startRxMode(rfid)) {
-   	fprintf(stdout, "Failed to enter RX Mode\n");
+   	fprintf(stderr, "Failed to enter RX Mode\n");
 	   exit(EXIT_FAILURE);
    }
 

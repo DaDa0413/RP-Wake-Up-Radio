@@ -127,7 +127,7 @@ int main(int argc, char* argv[]) {
 	mode = rfm69getState();
 	if (mode < 0) {
 		fprintf(fdlog, "Failed to read RFM69 Status\n");
-		fprintf(stdout, "Failed to read RFM69 Status\n");
+		fprintf(stderr, "Failed to read RFM69 Status\n");
 		exit(EXIT_FAILURE);
 	}
 
@@ -139,7 +139,7 @@ int main(int argc, char* argv[]) {
 		// prepare for TX
 		if (rfm69startTxMode(remrfid)) {
 			fprintf(fdlog, "Failed to enter TX Mode\n");
-			fprintf(stdout, "Failed to enter TX Mode\n");
+			fprintf(stderr, "Failed to enter TX Mode\n");
 			exit(EXIT_FAILURE);
 		}
 
@@ -151,7 +151,7 @@ int main(int argc, char* argv[]) {
 		{
 			// if(waitForInterrupt(gpio, 1) <= 0) { // wait for GPIO_xx
 			fprintf(fdlog, "Failed to wait for TX interrupt\n");
-			fprintf(stdout, "Failed to wait for TX interrupt\n");
+			fprintf(stderr, "Failed to wait for TX interrupt\n");
 			exit(EXIT_FAILURE);
 		}
 		do {
@@ -160,7 +160,7 @@ int main(int argc, char* argv[]) {
 			mode = rfm69getState();
 			if (mode < 0) {
 				fprintf(fdlog, "Failed to read RFM69 Status\n");
-				fprintf(stdout, "Failed to read RFM69 Status\n");
+				fprintf(stderr, "Failed to read RFM69 Status\n");
 				exit(EXIT_FAILURE);
 			}   
 		} while ((mode & 0x08) == 0);
@@ -185,21 +185,21 @@ int main(int argc, char* argv[]) {
 		// switch back to STDBY Mode
 		if (rfm69STDBYMode()) {
 			fprintf(fdlog, "Failed to enter STDBY Mode\n");
-			fprintf(stdout, "Failed to enter STDBY Mode\n");
+			fprintf(stderr, "Failed to enter STDBY Mode\n");
 			exit(EXIT_FAILURE);
 		}
 		// *** Reception ***
 		// prepare for RX
 		if (rfm69startRxMode(locrfid)) {
 			fprintf(fdlog, "Failed to enter RX Mode\n");
-			fprintf(stdout, "Failed to enter RX Mode\n");
+			fprintf(stderr, "Failed to enter RX Mode\n");
 			exit(EXIT_FAILURE);
 		}
 		// wait for HW interrupt(s) and check for CRC_Ok state
 		if (wiringPiISR(gpio, INT_EDGE_RISING, &myInterrupt1) < 0)
 		{
 			fprintf(fdlog, "Failed to wait for RX interrupt\n");
-			fprintf(stdout, "Failed to wait for RX interrupt\n");
+			fprintf(stderr, "Failed to wait for RX interrupt\n");
 			exit(EXIT_FAILURE);
 		}
 		do {
@@ -210,7 +210,7 @@ int main(int argc, char* argv[]) {
 			mode = rfm69getState();
 			if (mode < 0) {
 				fprintf(fdlog, "Failed to read RFM69 Status\n");
-				fprintf(stdout, "Failed to read RFM69 Status\n");
+				fprintf(stderr, "Failed to read RFM69 Status\n");
 				exit(EXIT_FAILURE);
 			}
 		} while ((mode & 0x02) == 0);
@@ -218,7 +218,7 @@ int main(int argc, char* argv[]) {
 		// switch back to STDBY Mode
 		if (rfm69STDBYMode()) {
 			fprintf(fdlog, "Failed to enter STDBY Mode\n");
-			fprintf(stdout, "Failed to enter STDBY Mode\n");
+			fprintf(stderr, "Failed to enter STDBY Mode\n");
 			exit(EXIT_FAILURE);
 		}
 		delay(20);
@@ -230,7 +230,7 @@ int main(int argc, char* argv[]) {
 		// prepare for TX
 		if (rfm69startTxMode(remrfid)) {
 			fprintf(fdlog, "Failed to enter TX Mode\n");
-			fprintf(stdout, "Failed to enter TX Mode\n");
+			fprintf(stderr, "Failed to enter TX Mode\n");
 			exit(EXIT_FAILURE);
 		}
 		// write Tx data
@@ -241,7 +241,7 @@ int main(int argc, char* argv[]) {
 		{
 			// if(waitForInterrupt(gpio, 1) <= 0) { // wait for GPIO_xx
 			fprintf(fdlog, "Failed to wait on sent-interrupt\n");
-			fprintf(stdout, "Failed to wait on sent-interrupt\n");
+			fprintf(stderr, "Failed to wait on sent-interrupt\n");
 			exit(EXIT_FAILURE);
 		}
 		do {
@@ -249,7 +249,7 @@ int main(int argc, char* argv[]) {
 			mode = rfm69getState();
 			if (mode < 0) {
 				fprintf(fdlog, "Failed to read RFM69 Status\n");
-				fprintf(stdout, "Failed to read RFM69 Status\n");
+				fprintf(stderr, "Failed to read RFM69 Status\n");
 				exit(EXIT_FAILURE);
 			}
 		} while ((mode & 0x08) == 0);
