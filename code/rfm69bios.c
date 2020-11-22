@@ -231,14 +231,14 @@ int rfm69setAutoModes(void)
 {
 	unsigned char spibuffer[2];
 	spibuffer[0] = 0x2A | 0x80; // Address + write cmd bit
-	spibuffer[1] = 0xC0;		// Set the TimeoutRxStart to 192 (time out every 0.01 seconds)
+	spibuffer[1] = 0x00;		// Set the TimeoutRxStart to 192 (time out every 0.01 seconds)
 	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, sizeof(spibuffer)) < 0)
 	{
 		fprintf(stderr, "Fail to wiringPiSPIDataRW\n");
 		exit(1);
 	}
 	spibuffer[0] = 0x3B | 0x80; // Address + write cmd bit
-	spibuffer[1] = 0xBE;		// Set the autoModes
+	spibuffer[1] = 0x67;		// Set the autoModes
 	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, sizeof(spibuffer)) < 0)
 	{
 		fprintf(stderr, "Fail to wiringPiSPIDataRW\n");
