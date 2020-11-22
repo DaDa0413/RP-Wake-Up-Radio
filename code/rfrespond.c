@@ -15,7 +15,7 @@ of the License, or (at your option) any later version.
 #ifndef RFM69BIOS_H
 #include "rfm69bios.h"
 #endif
-#define REMOTE_RFID = 0x14
+#define REMOTE_RFID 0x14
 
 void readConfig(char const *fileName, char clist[2][30])
 {

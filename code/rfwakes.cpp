@@ -258,7 +258,7 @@ int main(int argc, char* argv[]) {
 					// rfm69rxdata(recrfid, IDSIZE); // read complete remote RF ID
 					// check received vs. called remote RF ID
 					if (remrfid[IDSIZE - 1] != recrfid[0]) 
-						gotyou = 0
+						gotyou = 0;
 					else
 						gotyou = 1;
 					// for (i = 0, gotyou = 1; i < IDSIZE; i++) // ... and RF ID equal ...
