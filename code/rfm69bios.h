@@ -18,3 +18,4 @@ int rfm69startTxMode(const unsigned char*);
 int rfm69startRxMode(const unsigned char*);
 int rfm69restartRx(void);
 int rfm69ListenMode(const unsigned char*);
+int rfm69cancelAddrFilter(void);

@@ -216,7 +216,7 @@ int main(int argc, char* argv[]) {
 			}
 			// write Tx data
 			rfm69txdata(&remrfid[IDSIZE-1],1);
-			rfm69txdata(locrfid,IDSIZE);
+			// rfm69txdata(locrfid,IDSIZE);
 			// wait for HW interrupt(s) and check for TX_Sent state, takes approx. 853.3�s
 			do {
 				usleep(1000);
@@ -241,6 +241,9 @@ int main(int argc, char* argv[]) {
 				fprintf(stderr, "Failed to enter RX Mode\n");
 				exit(EXIT_FAILURE);
 			}
+			// Node address filter will be reset after rfm69startTxMode or rfm69startRxMode
+			rfm69cancelAddrFilter();
+
 			// wait for HW interrupt(s) and check for CRC_Ok state
 			usleep(84000);
 			if (intReg == 1) { // in case of reception ...
@@ -252,10 +255,14 @@ int main(int argc, char* argv[]) {
 				if ((mode & 0x02) == 0x02) { // ... and CrcOk ...
 					// read remote RF ID from FIFO
 					rfm69rxdata(recrfid, 1); // skip last byte of called RF ID
-					rfm69rxdata(recrfid, IDSIZE); // read complete remote RF ID
+					// rfm69rxdata(recrfid, IDSIZE); // read complete remote RF ID
 					// check received vs. called remote RF ID
-					for (i = 0, gotyou = 1; i < IDSIZE; i++) // ... and RF ID equal ...
-						if (remrfid[i] != recrfid[i]) gotyou = 0; // ... then done
+					if (remrfid[IDSIZE - 1] != recrfid[0]) 
+						gotyou = 0
+					else
+						gotyou = 1;
+					// for (i = 0, gotyou = 1; i < IDSIZE; i++) // ... and RF ID equal ...
+					// 	if (remrfid[i] != recrfid[i]) gotyou = 0; // ... then done
 					//if (!gotyou) delay(85); // wait long enough if wrong RF ID received
 				}
 			}
@@ -272,7 +279,7 @@ int main(int argc, char* argv[]) {
 			else {
 				// output of remote RF ID
 				fprintf(stdout, "ACK received from called Station RF ID ");
-				printrfid(recrfid);
+				printrfid(remrfid);
 				fprintf(stdout,"\n");
 				
 				// write into log file

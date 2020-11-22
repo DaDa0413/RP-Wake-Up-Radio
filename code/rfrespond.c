@@ -15,6 +15,8 @@ of the License, or (at your option) any later version.
 #ifndef RFM69BIOS_H
 #include "rfm69bios.h"
 #endif
+#define REMOTE_RFID = 0x14
+
 void readConfig(char const *fileName, char clist[2][30])
 {
     FILE *file = fopen(fileName, "r");
@@ -73,10 +75,16 @@ int main(int argc, char* argv[]) {
 		strcpy(config[1], argv[2]);
 	}
 	
+	// Set locrfid and remoterfid
 	ap = config[0];
 	for (i = 0, ap = config[0]; i < IDSIZE; i++,ap++) {
 		locrfid[i] = strtoul(ap,&ap,16);
 	}
+	for (i = 0; i < IDSIZE - 1; i++)	// Last byte will be filled in after receiving WuR
+	{
+		remrfid[i] = 0x11;
+	}
+	remrfid[IDSIZE - 1] = REMOTE_RFID;
 	gpio = atoi(config[1]);
 	fprintf(stdout, "RFID:%s, GPIO:%d\n",config[0] , gpio); 
 
@@ -134,8 +142,9 @@ int main(int argc, char* argv[]) {
 	if (mode == 0x00048060) {
 		// *** Send ACK ***
 		// read remote RF ID from FIFO
-		rfm69rxdata(remrfid, 1); // skip last byte of called RF ID
-		rfm69rxdata(remrfid, IDSIZE); // read complete remote RF ID
+		unsigned char temp;
+		rfm69rxdata(&temp, 1); // skip last byte of called RF ID
+		// rfm69rxdata(remrfid, IDSIZE); // read complete remote RF ID
 		// prepare for TX
 		if (rfm69startTxMode(remrfid)) {
 			fprintf(fdlog, "Failed to enter TX Mode\n");
@@ -144,8 +153,8 @@ int main(int argc, char* argv[]) {
 		}
 
 		// write Tx data
-		rfm69txdata(&remrfid[IDSIZE-1],1); // write last byte of remote RF ID
-		rfm69txdata(locrfid,IDSIZE); // write complete local RF ID
+		// rfm69txdata(&remrfid[IDSIZE-1],1); // write last byte of remote RF ID
+		rfm69txdata(&locrfid[IDSIZE - 1], 1); // write complete local RF ID
 		// wait for HW interrupt(s) and check for TX_Sent state, takes approx. 853.3µs
 		if (wiringPiISR(gpio, INT_EDGE_RISING, &myInterrupt0) < 0)
 		{
@@ -225,8 +234,9 @@ int main(int argc, char* argv[]) {
 
 		// *** Send ACK ***
 		// read remote RF ID from FIFO
-		rfm69rxdata(remrfid, 1); // skip last byte of called RF ID
-		rfm69rxdata(remrfid, IDSIZE); // read complete remote RF ID
+		unsigned char temp;
+		rfm69rxdata(&temp, 1); // skip last byte of called RF ID
+		// rfm69rxdata(remrfid, IDSIZE); // read complete remote RF ID
 		// prepare for TX
 		if (rfm69startTxMode(remrfid)) {
 			fprintf(fdlog, "Failed to enter TX Mode\n");
@@ -234,8 +244,8 @@ int main(int argc, char* argv[]) {
 			exit(EXIT_FAILURE);
 		}
 		// write Tx data
-		rfm69txdata(&remrfid[IDSIZE-1],1); // write last byte of remote RF ID
-		rfm69txdata(locrfid,IDSIZE); // write complete local RF ID
+		// rfm69txdata(&remrfid[IDSIZE-1],1); // write last byte of remote RF ID
+		rfm69txdata(&locrfid[IDSIZE - 1], 1); // write complete local RF ID
 		// wait for HW interrupt(s) and check for TX_Sent state, takes approx. 853.3µs
 		if (wiringPiISR(gpio, INT_EDGE_RISING, &myInterrupt2) < 0)
 		{
