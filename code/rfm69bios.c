@@ -57,11 +57,18 @@ int rfm69init(unsigned char* spibuffer, const unsigned char* rfid) {
 	for (i = 0; i < IDSIZE-1; i++)
 		spibuffer[0x2F+i] = rfid[i];
 	spibuffer[0x39] = rfid[IDSIZE-1];
-	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, sizeof(initvec)) < 0) exit(1);
-
+	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, sizeof(initvec)) < 0)
+	{
+		fprintf(stderr, "Fail to wiringPiSPIDataRW\n");
+		exit(1);
+	}
 	for (i = 0; i < sizeof(inittst3); i++)
 		spibuffer[i] = inittst3[i];
-	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, sizeof(inittst3)) < 0) exit(2);
+	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, sizeof(inittst3)) < 0)
+	{
+		fprintf(stderr, "Fail to wiringPiSPIDataRW\n");
+		exit(1);
+	}
 	return 0;
 }
 
@@ -96,7 +103,11 @@ int rfm69txdata(const unsigned char* data, unsigned int size) {
 	if (size > IDSIZE) exit (1);
 	spibuffer[0] = 0x00 | 0x80; // Address + write cmd bit
 	for (i = 0; i < size; i++) spibuffer[1+i] = data[i];
-	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, size+1) < 0) exit(2);
+	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, size + 1) < 0)
+	{
+		fprintf(stderr, "Fail to wiringPiSPIDataRW\n");
+		exit(1);
+	}
 	return 0;
 }
 
@@ -105,8 +116,13 @@ int rfm69rxdata(unsigned char* data, unsigned int size) {
 	int i;
 	if (size > IDSIZE) exit (1);
 	spibuffer[0] = 0x00 & 0x7F; // Address + write cmd bit
-	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, size+1) < 0) exit(2);
-	for (i = 0; i < size; i++) data[i] = spibuffer[1+i];
+	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, size + 1) < 0)
+	{
+		fprintf(stderr, "Fail to wiringPiSPIDataRW\n");
+		exit(1);
+	}
+	for (i = 0; i < size; i++)
+		data[i] = spibuffer[1 + i];
 	return 0;
 }
 
@@ -114,7 +130,11 @@ int rfm69STDBYMode() {
 	unsigned char spibuffer[2];
 	spibuffer[0] = 0x01 | 0x80; // Address + write cmd bit
 	spibuffer[1] = 0x24; // STDBY Mode (+ terminate Listen Mode)
-	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, sizeof(spibuffer)) < 0) exit(1);
+	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, sizeof(spibuffer)) < 0)
+	{
+		fprintf(stderr, "Fail to wiringPiSPIDataRW\n");
+		exit(1);
+	}
 	delayMicroseconds(100);
 	return 0;
 }
@@ -125,7 +145,11 @@ int rfm69startTxMode(const unsigned char* rfid) {
 	// switch to TX Mode
 	spibuffer[0] = 0x01 | 0x80; // Address + write cmd bit
 	spibuffer[1] = 0x0C; // TX Mode (+ terminate Listen Mode)
-	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, 2) < 0) exit(2);
+	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, 2) < 0)
+	{
+		fprintf(stderr, "Fail to wiringPiSPIDataRW\n");
+		exit(1);
+	}
 	return 0;
 }
 
@@ -135,7 +159,11 @@ int rfm69startRxMode(const unsigned char* rfid) {
 	// switch to RX Mode
 	spibuffer[0] = 0x01 | 0x80; // Address + write cmd bit
 	spibuffer[1] = 0x10; // RX Mode
-	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, 2) < 0) exit(2);
+	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, 2) < 0)
+	{
+		fprintf(stderr, "Fail to wiringPiSPIDataRW\n");
+		exit(1);
+	}
 	return 0;
 }
 
@@ -143,7 +171,11 @@ int rfm69restartRx(void) {
 	unsigned char spibuffer[2];
 	spibuffer[0] = 0x3D | 0x80; // Address + write cmd bit
 	spibuffer[1] = 0x06; // STDBY Mode (+ terminate Listen Mode)
-	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, sizeof(spibuffer)) < 0) exit(1);
+	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, sizeof(spibuffer)) < 0)
+	{
+		fprintf(stderr, "Fail to wiringPiSPIDataRW\n");
+		exit(1);
+	}
 	return 0;
 }
 
@@ -153,7 +185,11 @@ int rfm69ListenMode(const unsigned char* rfid) {
 	// switch to RX Mode
 	spibuffer[0] = 0x01 | 0x80; // Address + write cmd bit
 	spibuffer[1] = 0x44; // Listen Mode (+ STDBY Mode)
-	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, 2) < 0) exit(2);
+	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, sizeof(spibuffer)) < 0)
+	{
+		fprintf(stderr, "Fail to wiringPiSPIDataRW\n");
+		exit(1);
+	}
 	return 0;
 }
 
@@ -184,6 +220,49 @@ int rfm69cancelAddrFilter(void)
 	spibuffer[0] = 0x37 | 0x80; // Address + write cmd bit
 	spibuffer[1] = 0x10;		// Cancel address filter to receive ack
 	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, sizeof(spibuffer)) < 0)
+	{
+		fprintf(stderr, "Fail to wiringPiSPIDataRW\n");
 		exit(1);
+	}
+	return 0;
+}
+
+int rfm69setAutoModes(void)
+{
+	unsigned char spibuffer[2];
+	spibuffer[0] = 0x2A | 0x80; // Address + write cmd bit
+	spibuffer[1] = 0xC0;		// Set the TimeoutRxStart to 192 (time out every 0.01 seconds)
+	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, sizeof(spibuffer)) < 0)
+	{
+		fprintf(stderr, "Fail to wiringPiSPIDataRW\n");
+		exit(1);
+	}
+	spibuffer[0] = 0x3B | 0x80; // Address + write cmd bit
+	spibuffer[1] = 0xBE;		// Set the autoModes
+	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, sizeof(spibuffer)) < 0)
+	{
+		fprintf(stderr, "Fail to wiringPiSPIDataRW\n");
+		exit(1);
+	}
+	return 0;
+}
+
+int rfm69cancelAutoModes(void)
+{
+	unsigned char spibuffer[2];
+	spibuffer[0] = 0x2A | 0x80; // Address + write cmd bit
+	spibuffer[1] = 0x00;		// UnSet the TimeoutRxStart
+	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, sizeof(spibuffer)) < 0)
+	{
+		fprintf(stderr, "Fail to wiringPiSPIDataRW\n");
+		exit(1);
+	}
+	spibuffer[0] = 0x3B | 0x80; // Address + write cmd bit
+	spibuffer[1] = 0x00;		// UnSet the autoModes
+	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, sizeof(spibuffer)) < 0)
+	{
+		fprintf(stderr, "Fail to wiringPiSPIDataRW\n");
+		exit(1);
+	}
 	return 0;
 }
