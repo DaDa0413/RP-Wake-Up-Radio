@@ -130,12 +130,6 @@ int main(int argc, char* argv[]) {
 	//fclose(stdout);
 	//fclose(stderr);
 
-	// Cancel Auto modes
-	if (rfm69cancelAutoModes())
-	{
-		fprintf(stderr, "Failed to enter TX Mode\n");
-		exit(EXIT_FAILURE);
-	}
 	// *** Check RFM69 Status ***
 	// get mode
 	mode = rfm69getState();

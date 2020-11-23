@@ -7,7 +7,7 @@ if not os.geteuid()==0:
 
 time.sleep(20) # Wait for "rfresponse" send ACK
 
-cmd = "/usr/local/bin/rfwait2"
+cmd = "/usr/local/bin/rfwait"
 os.system(cmd)
 
 time.sleep(3) # Wait for ~~~
