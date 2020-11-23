@@ -1,6 +1,6 @@
 Raspberry Pi Wake-up Radio
 ==========================
-
+Now is stable version of listen mode
 # Purpose
 
 An add-on board attached to the Raspberry Pi's P1 header controls the 5V power
