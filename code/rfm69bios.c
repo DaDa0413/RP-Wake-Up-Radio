@@ -88,7 +88,7 @@ int rfm69init(unsigned char* spibuffer, const unsigned char* rfid) {
 	return 0;
 }
 // Used for init listen mode
-int rfm69init(unsigned char* spibuffer, const unsigned char* rfid) {
+int rfm69init2(unsigned char* spibuffer, const unsigned char* rfid) {
 	int i;
 	for (i = 0; i < sizeof(initvec2); i++)
 		spibuffer[i] = initvec2[i];
@@ -223,7 +223,7 @@ int rfm69ListenMode(const unsigned char* rfid) {
 	// switch to RX Mode
 	spibuffer[0] = 0x01 | 0x80; // Address + write cmd bit
 	spibuffer[1] = 0x44; // Listen Mode (+ STDBY Mode)
-	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, sizeof(spibuffer)) < 0)
+	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, 2) < 0)
 	{
 		fprintf(stderr, "Fail to wiringPiSPIDataRW\n");
 		exit(1);
