@@ -25,6 +25,22 @@ const unsigned char initvec[] = {
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,	// 40
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00,	// 48
 };
+
+// Use for listen mode
+const unsigned char initvec2[] = {
+		0x01 | 0x80, // Address + write cmd bit
+	//	 0/8   1/9   2/A   3/B   4/C   5/D   6/E   7/F
+		      0x24, 0x02, 0x00, 0x6B, 0x04, 0xC9, 0xD9,	// 00
+		0x13, 0x33, 0x80, 0x00, 0x02, 0x6C, 0x01, 0xFF,	// 08
+		0x23, 0x7C, 0x09, 0x1A, 0x40, 0xB0, 0x7B, 0x9B,	// 10
+		0x00, 0x48, 0x80, 0x40, 0x80, 0x06, 0x0C, 0x00,	// 18
+		0x00, 0x00, 0x00, 0x00, 0xFF, 0x00, 0x07, 0x80,	// 20
+		0x00, 0xA0, 0x00, 0x00, 0x00, 0x0E, 0xB0, 0x00,	// 28
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x12,	// 30
+		0x01, 0x00, 0x00, 0x00, 0x80, 0x02, 0x00, 0x00,	// 38
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,	// 40
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00,	// 48
+};
 // Temp not used
 const unsigned char inittst1[] = {
 		0x58 | 0x80, // Address + write cmd bit
@@ -58,6 +74,28 @@ int rfm69init(unsigned char* spibuffer, const unsigned char* rfid) {
 		spibuffer[0x2F+i] = rfid[i];
 	spibuffer[0x39] = rfid[IDSIZE-1];
 	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, sizeof(initvec)) < 0)
+	{
+		fprintf(stderr, "Fail to wiringPiSPIDataRW\n");
+		exit(1);
+	}
+	for (i = 0; i < sizeof(inittst3); i++)
+		spibuffer[i] = inittst3[i];
+	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, sizeof(inittst3)) < 0)
+	{
+		fprintf(stderr, "Fail to wiringPiSPIDataRW\n");
+		exit(1);
+	}
+	return 0;
+}
+// Used for init listen mode
+int rfm69init(unsigned char* spibuffer, const unsigned char* rfid) {
+	int i;
+	for (i = 0; i < sizeof(initvec2); i++)
+		spibuffer[i] = initvec2[i];
+	for (i = 0; i < IDSIZE-1; i++)
+		spibuffer[0x2F+i] = rfid[i];
+	spibuffer[0x39] = rfid[IDSIZE-1];
+	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, sizeof(initvec2)) < 0)
 	{
 		fprintf(stderr, "Fail to wiringPiSPIDataRW\n");
 		exit(1);
@@ -181,7 +219,7 @@ int rfm69restartRx(void) {
 
 int rfm69ListenMode(const unsigned char* rfid) {
 	unsigned char spibuffer[sizeof(initvec)];
-	if (rfm69init(spibuffer, rfid)) exit(1);
+	if (rfm69init2(spibuffer, rfid)) exit(1);
 	// switch to RX Mode
 	spibuffer[0] = 0x01 | 0x80; // Address + write cmd bit
 	spibuffer[1] = 0x44; // Listen Mode (+ STDBY Mode)
