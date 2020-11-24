@@ -244,7 +244,12 @@ int main(int argc, char* argv[]) {
 		payload[11] = '\0';
 		rfm69rxdata(payload, 11); // skip last byte of called RF ID
 		fprintf(fdlog, "Received payload: %s\n", payload);
-		fprintf(stdout, "Received payload: %s\n", payload);
+		fprintf(stdout, "Received payload:");
+		for (int i = 0; i < 11; i++) {
+			if(i != 0) fprintf(stdout,":");
+			fprintf(stdout, "%02x", payload[i]);
+		}
+		fprintf(stdout, "\n");
 		// prepare for TX
 		if (rfm69startTxMode(remrfid)) {
 			fprintf(fdlog, "Failed to enter TX Mode\n");

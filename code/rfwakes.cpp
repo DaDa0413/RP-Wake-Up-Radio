@@ -204,7 +204,8 @@ int main(int argc, char* argv[]) {
 		fprintf(stdout, "Failed to set gpio to wiringPiISR\n");
 		exit(EXIT_FAILURE);
 	}
-	do {
+	{
+	// do {
 		for (auto it = Targetlist.begin(); it != Targetlist.end();) {
 			unsigned char remrfid[IDSIZE];
 			memcpy(&remrfid, &it->remrfid, sizeof it->remrfid);
@@ -256,7 +257,14 @@ int main(int argc, char* argv[]) {
 					// read remote RF ID from FIFO
 					memset(payload, 0, 11);
 					rfm69rxdata(payload, 11); // skip last byte of called RF ID
-					fprintf(stdout, "Received payload: %s\n", payload);
+
+					fprintf(stdout, "Received payload:");
+					for (int i = 0; i < 11; i++) {
+						if(i != 0) fprintf(stdout,":");
+						fprintf(stdout, "%02x", payload[i]);
+					}
+					fprintf(stdout, "\n");
+
 					// check received vs. called remote RF ID
 					for (int j = 0, gotyou = 1; j < 11; j++)
 						if (remrfid[IDSIZE - 1] != payload[j]) 
@@ -295,8 +303,8 @@ int main(int argc, char* argv[]) {
 				it = Targetlist.erase(it);
 			}
 		}
-	} while(!Targetlist.empty());
-
+	// } while(!Targetlist.empty());
+	}
 
 	close(fd);
 
