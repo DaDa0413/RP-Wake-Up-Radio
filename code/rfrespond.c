@@ -140,11 +140,15 @@ int main(int argc, char* argv[]) {
 	}
 
 	if (mode == 0x00048060) {
+		fprintf(fdlog, "Received WuR while packet was sleeping\n");
+		fprintf(stdout, "Received WuR while packet was sleeping\n");
 		// *** Send ACK ***
 		// read remote RF ID from FIFO
-		unsigned char temp;
-		rfm69rxdata(&temp, 1); // skip last byte of called RF ID
-		// rfm69rxdata(remrfid, IDSIZE); // read complete remote RF ID
+		unsigned char payload[12];
+		payload[11] = '\0';
+		rfm69rxdata(payload, 11); // skip last byte of called RF ID
+		fprintf(fdlog, "Received payload: %s\n", payload);
+		fprintf(stdout, "Received payload: %s\n", payload);
 		// prepare for TX
 		if (rfm69startTxMode(remrfid)) {
 			fprintf(fdlog, "Failed to enter TX Mode\n");
@@ -153,8 +157,10 @@ int main(int argc, char* argv[]) {
 		}
 
 		// write Tx data
-		// rfm69txdata(&remrfid[IDSIZE-1],1); // write last byte of remote RF ID
-		rfm69txdata(&locrfid[IDSIZE - 1], 1); // write complete local RF ID
+		payload[0] = REMOTE_RFID;
+		for (int j = 1; j < 11; j++)
+			payload[j] = locrfid[IDSIZE - 1];
+		rfm69txdata(payload, 11); // write complete local RF ID
 		// wait for HW interrupt(s) and check for TX_Sent state, takes approx. 853.3µs
 		if (wiringPiISR(gpio, INT_EDGE_RISING, &myInterrupt0) < 0)
 		{
@@ -234,9 +240,9 @@ int main(int argc, char* argv[]) {
 
 		// *** Send ACK ***
 		// read remote RF ID from FIFO
-		unsigned char temp;
-		rfm69rxdata(&temp, 1); // skip last byte of called RF ID
-		// rfm69rxdata(remrfid, IDSIZE); // read complete remote RF ID
+		unsigned char payload[12];
+		payload[11] = '\0';
+		rfm69rxdata(payload, 11); // skip last byte of called RF ID
 		// prepare for TX
 		if (rfm69startTxMode(remrfid)) {
 			fprintf(fdlog, "Failed to enter TX Mode\n");
@@ -244,8 +250,10 @@ int main(int argc, char* argv[]) {
 			exit(EXIT_FAILURE);
 		}
 		// write Tx data
-		// rfm69txdata(&remrfid[IDSIZE-1],1); // write last byte of remote RF ID
-		rfm69txdata(&locrfid[IDSIZE - 1], 1); // write complete local RF ID
+		payload[0] = REMOTE_RFID;
+		for (int j = 1; j < 11; j++)
+			payload[j] = locrfid[IDSIZE - 1];
+		rfm69txdata(payload, 11); // write complete local RF ID
 		// wait for HW interrupt(s) and check for TX_Sent state, takes approx. 853.3µs
 		if (wiringPiISR(gpio, INT_EDGE_RISING, &myInterrupt2) < 0)
 		{
