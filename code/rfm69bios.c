@@ -236,7 +236,8 @@ int rfm69getAllState() {
     printf("-----------------------------------------\n");
     unsigned char spibuffer[2];
     printf("00 | ");
-    for(int i = 0; i < 80; i++) {
+	printf("XX, ");
+    for(int i = 1; i < 80; i++) {
         int status = 0;
         spibuffer[0] = i & 0x7F; // Address + read cmd bit
 	    if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, 2) < 0) exit(-1);

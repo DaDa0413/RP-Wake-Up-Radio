@@ -84,10 +84,9 @@ std::vector <Target> readTargets(char* targetFName){
 		else
 			item[n++] = (char) c;
 	}
-
+	fclose(file);
 	return tlist;
 	//fprintf(stdout, "%s\n", tt);
-	fclose(file);
 }
 
 void printrfid(unsigned char rfid[]) {
@@ -264,10 +263,20 @@ int main(int argc, char* argv[]) {
 					fprintf(stdout, "\n");
 
 					// check received vs. called remote RF ID
-					gotyou = 1;
-					for (int j = 1; j < 11; j++)
-						if (remrfid[IDSIZE - 1] != payload[j]) 
-							gotyou = 0;
+					for(std::vector <Target>::iterator it2= Targetlist.begin(); it2 != Targetlist.end(); it2++)
+					{					
+						gotyou = 1;
+						unsigned char temp = it2->remrfid[IDSIZE - 1];
+						for (int j = 1; j < 11; j++)
+							if (temp != payload[j]) 
+								gotyou = 0;
+						if (gotyou == 1)
+						{
+							it = it2;
+							break;
+						}
+						
+					}
 				}
 			}
 			// switch back to STDBY Mode
