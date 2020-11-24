@@ -292,7 +292,7 @@ int main(int argc, char* argv[]) {
 			else {
 				// output of remote RF ID
 				fprintf(stdout, "ACK received from called Station RF ID ");
-				printrfid(remrfid);
+				printrfid(it->remrfid);
 				fprintf(stdout,"\n");
 				
 				// write into log file
