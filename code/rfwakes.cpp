@@ -186,7 +186,7 @@ int main(int argc, char* argv[]) {
 		fprintf(stdout, "\n");
 	}
 
-
+	fprintf(stdout, "Start waking up\n");
 	// *** Setup ***
 	if (wiringPiSetupSys() < 0) {
 		fprintf(stderr, "Failed to setup wiringPi\n");
@@ -236,7 +236,6 @@ int main(int argc, char* argv[]) {
 				fprintf(stderr, "Failed to enter STDBY Mode\n");
 				exit(EXIT_FAILURE);
 			}
-
 			// *** Reception ***
 			// prepare for RX
 			intReg = 0;
@@ -255,13 +254,13 @@ int main(int argc, char* argv[]) {
 				}
 				if ((mode & 0x02) == 0x02) { // ... and CrcOk ...
 					// read remote RF ID from FIFO
+					memset(payload, 0, 11);
 					rfm69rxdata(payload, 11); // skip last byte of called RF ID
 					fprintf(stdout, "Received payload: %s\n", payload);
 					// check received vs. called remote RF ID
-					if (remrfid[IDSIZE - 1] != payload[1]) 
-						gotyou = 0;
-					else
-						gotyou = 1;
+					for (int j = 0, gotyou = 1; j < 11; j++)
+						if (remrfid[IDSIZE - 1] != payload[j]) 
+							gotyou = 0;
 				}
 			}
 			// switch back to STDBY Mode
