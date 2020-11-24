@@ -240,8 +240,7 @@ int main(int argc, char* argv[]) {
 
 		// *** Send ACK ***
 		// read remote RF ID from FIFO
-		unsigned char payload[12];
-		payload[11] = '\0';
+		unsigned char payload[11];
 		rfm69rxdata(payload, 11); // skip last byte of called RF ID
 		fprintf(fdlog, "Received payload: %s\n", payload);
 		fprintf(stdout, "Received payload:");

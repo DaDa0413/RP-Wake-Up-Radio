@@ -186,7 +186,6 @@ int main(int argc, char* argv[]) {
 		fprintf(stdout, "\n");
 	}
 
-	fprintf(stdout, "Start waking up\n");
 	// *** Setup ***
 	if (wiringPiSetupSys() < 0) {
 		fprintf(stderr, "Failed to setup wiringPi\n");
@@ -204,8 +203,8 @@ int main(int argc, char* argv[]) {
 		fprintf(stdout, "Failed to set gpio to wiringPiISR\n");
 		exit(EXIT_FAILURE);
 	}
-	{
-	// do {
+	
+	do {
 		for (auto it = Targetlist.begin(); it != Targetlist.end();) {
 			unsigned char remrfid[IDSIZE];
 			memcpy(&remrfid, &it->remrfid, sizeof it->remrfid);
@@ -216,8 +215,7 @@ int main(int argc, char* argv[]) {
 				exit(EXIT_FAILURE);
 			}
 			// write Tx data
-			unsigned char payload[12];
-			payload[11] = '\0';
+			unsigned char payload[11];
 			for (int j = 0; j < 11; j++)
 				payload[j] = remrfid[IDSIZE-1];
 			rfm69txdata(payload, 11);
@@ -266,7 +264,8 @@ int main(int argc, char* argv[]) {
 					fprintf(stdout, "\n");
 
 					// check received vs. called remote RF ID
-					for (int j = 0, gotyou = 1; j < 11; j++)
+					gotyou = 1;
+					for (int j = 1; j < 11; j++)
 						if (remrfid[IDSIZE - 1] != payload[j]) 
 							gotyou = 0;
 				}
@@ -303,8 +302,8 @@ int main(int argc, char* argv[]) {
 				it = Targetlist.erase(it);
 			}
 		}
-	// } while(!Targetlist.empty());
-	}
+	} while(!Targetlist.empty());
+
 
 	close(fd);
 
