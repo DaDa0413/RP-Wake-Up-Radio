@@ -15,21 +15,20 @@ except subprocess.TimeoutExpired:
     process.kill()
 
 # time.sleep(15) # Wait for "rfresponse" send ACK
-
-process = subprocess.Popen(['/usr/local/bin/rfwait'])
-try:
-    print('[INFO] rfwait: ', process.pid)
-    process.wait()
-except subprocess.TimeoutExpired:
-    print('Timed out - killing rfwait')
-    process.kill()
-
 process = subprocess.Popen(['/usr/local/bin/cleanFIFO'])
 try:
     print('[INFO] cleanFIFO: ', process.pid)
     process.wait()
 except subprocess.TimeoutExpired:
     print('Timed out - killing cleanFIFO')
+    process.kill()
+    
+process = subprocess.Popen(['/usr/local/bin/rfwait'])
+try:
+    print('[INFO] rfwait: ', process.pid)
+    process.wait()
+except subprocess.TimeoutExpired:
+    print('Timed out - killing rfwait')
     process.kill()
 
 print("Bye!\n")
