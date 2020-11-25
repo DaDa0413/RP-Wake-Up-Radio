@@ -37,7 +37,7 @@ const unsigned char initvec2[] = {
 		0x00, 0x00, 0x00, 0x00, 0xFF, 0x00, 0x07, 0x80,	// 20
 		0x00, 0xA0, 0x00, 0xFF, 0x00, 0x0E, 0xB0, 0x00,	// 28
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x12,	// 30
-		0x0B, 0x00, 0x00, 0x00, 0x8C, 0x02, 0x00, 0x00,	// 38
+		0x0B, 0x00, 0x00, 0x00, 0x0A, 0x02, 0x00, 0x00,	// 38
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,	// 40
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00,	// 48
 };
@@ -271,14 +271,14 @@ int rfm69setAutoModes(void)
 	unsigned char spibuffer[2];
 	spibuffer[0] = 0x2A | 0x80; // Address + write cmd bit
 	spibuffer[1] = 0x00;		// Set the TimeoutRxStart to 192 (time out every 0.01 seconds)
-	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, sizeof(spibuffer)) < 0)
+	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, 2) < 0)
 	{
 		fprintf(stderr, "Fail to wiringPiSPIDataRW\n");
 		exit(1);
 	}
 	spibuffer[0] = 0x3B | 0x80; // Address + write cmd bit
 	spibuffer[1] = 0x9A;		// Set the autoModes
-	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, sizeof(spibuffer)) < 0)
+	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, 2) < 0)
 	{
 		fprintf(stderr, "Fail to wiringPiSPIDataRW\n");
 		exit(1);
@@ -291,14 +291,14 @@ int rfm69cancelAutoModes(void)
 	unsigned char spibuffer[2];
 	spibuffer[0] = 0x2A | 0x80; // Address + write cmd bit
 	spibuffer[1] = 0x00;		// UnSet the TimeoutRxStart
-	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, sizeof(spibuffer)) < 0)
+	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, 2) < 0)
 	{
 		fprintf(stderr, "Fail to wiringPiSPIDataRW\n");
 		exit(1);
 	}
 	spibuffer[0] = 0x3B | 0x80; // Address + write cmd bit
 	spibuffer[1] = 0x00;		// UnSet the autoModes
-	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, sizeof(spibuffer)) < 0)
+	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, 2) < 0)
 	{
 		fprintf(stderr, "Fail to wiringPiSPIDataRW\n");
 		exit(1);
