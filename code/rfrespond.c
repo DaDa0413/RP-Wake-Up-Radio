@@ -219,7 +219,7 @@ int main(int argc, char* argv[]) {
 		// }
 		do {
 			// res = waitForInterrupt(gpio, 86); // wait for GPIO_xx
-			 rfm69restartRx();
+			rfm69restartRx();
 			usleep(86000);
 			// if (intReg1 == 0)
 				// rfm69restartRx();
@@ -250,6 +250,10 @@ int main(int argc, char* argv[]) {
 			fprintf(stdout, "%02x", payload[i]);
 		}
 		fprintf(stdout, "\n");
+		for (int i = 0; i < 11; i++) {
+			if (payload[i] != locrfid[IDSIZE - 1])
+				continue;
+		}
 		// prepare for TX
 		if (rfm69startTxMode(remrfid)) {
 			fprintf(fdlog, "Failed to enter TX Mode\n");
