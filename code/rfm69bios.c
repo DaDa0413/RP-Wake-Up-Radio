@@ -136,7 +136,7 @@ int rfm69getState() {
 }
 
 int rfm69txdata(const unsigned char* data, unsigned int size) {
-	unsigned char spibuffer[IDSIZE+1];
+	unsigned char spibuffer[100];
 	int i;
 	// if (size > IDSIZE) exit (1);
 	spibuffer[0] = 0x00 | 0x80; // Address + write cmd bit
@@ -150,7 +150,7 @@ int rfm69txdata(const unsigned char* data, unsigned int size) {
 }
 
 int rfm69rxdata(unsigned char* data, unsigned int size) {
-	unsigned char spibuffer[IDSIZE+1];
+	unsigned char spibuffer[100];
 	int i;
 	// if (size > IDSIZE) exit (1);
 	spibuffer[0] = 0x00 & 0x7F; // Address + write cmd bit
