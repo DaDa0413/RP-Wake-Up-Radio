@@ -24,6 +24,14 @@ except subprocess.TimeoutExpired:
     print('Timed out - killing rfwait')
     process.kill()
 
+process = subprocess.Popen(['/usr/local/bin/cleanFIFO'])
+try:
+    print('[INFO] cleanFIFO: ', process.pid)
+    process.wait()
+except subprocess.TimeoutExpired:
+    print('Timed out - killing cleanFIFO')
+    process.kill()
+
 print("Bye!\n")
 
 cmd = "/sbin/shutdown now"
