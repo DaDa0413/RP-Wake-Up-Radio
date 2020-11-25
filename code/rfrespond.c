@@ -250,10 +250,16 @@ int main(int argc, char* argv[]) {
 			fprintf(stdout, "%02x", payload[i]);
 		}
 		fprintf(stdout, "\n");
+		int same = 1;
 		for (int i = 0; i < 11; i++) {
 			if (payload[i] != locrfid[IDSIZE - 1])
-				continue;
+			{
+				same = 0;
+				break;
+			}
 		}
+		if (!same)
+			continue;
 		// prepare for TX
 		if (rfm69startTxMode(remrfid)) {
 			fprintf(fdlog, "Failed to enter TX Mode\n");
