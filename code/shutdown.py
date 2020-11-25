@@ -1,16 +1,28 @@
 import os, sys
 import time
+import subprocess
 
 # This program must be run as root
 if not os.geteuid()==0:
     sys.exit("Hint: call me as root")
 
-time.sleep(15) # Wait for "rfresponse" send ACK
+process = subprocess.Popen(['/usr/local/bin/rfrespond'])
+try:
+    print('[INFO] rfespond: ', process.pid)
+    process.wait(timeout=15)
+except subprocess.TimeoutExpired:
+    print('Timed out - killing rfrespond')
+    process.kill()
 
-cmd = "/usr/local/bin/rfwait"
-os.system(cmd)
+# time.sleep(15) # Wait for "rfresponse" send ACK
 
-time.sleep(3) # Wait for ~~~
+process = subprocess.Popen(['/usr/local/bin/rfwait'])
+try:
+    print('[INFO] rfwait: ', process.pid)
+    process.wait()
+except subprocess.TimeoutExpired:
+    print('Timed out - killing rfwait')
+    process.kill()
 
 print("Bye!\n")
 
