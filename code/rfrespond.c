@@ -315,10 +315,10 @@ int main(int argc, char* argv[]) {
 		fflush(stdout);
 		// guarantee < 1% air time
 		delay(85);
+		close(fdspi);
+		fclose(fdlog);
+		fclose(stdout);
+		fclose(stderr);
+		exit(EXIT_SUCCESS);
 	}
-	close(fdspi);
-	fclose(fdlog);
-	fclose(stdout);
-	fclose(stderr);
-	exit(EXIT_SUCCESS);
 }
