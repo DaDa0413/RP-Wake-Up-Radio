@@ -281,7 +281,7 @@ int main(int argc, char* argv[]) {
 				}
 			} while ((mode & 0x08) == 0 || (mode & 0x40) == 1);
 			unsigned char spibuffer[2];
-			spibuffer[0] = 0x28 | 0x08;
+			spibuffer[0] = 0x28 | 0x80;
 			spibuffer[1] = 0x00;
 			if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, 2) < 0)
 			{
