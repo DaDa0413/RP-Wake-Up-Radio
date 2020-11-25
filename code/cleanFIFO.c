@@ -20,10 +20,6 @@ int main(int argc, char* argv[]) {
    int fd;
 
    // ****************************************************
-   // Read config frome "/home/pi/myConfig" and argv
-   // ****************************************************
-   
-   // ****************************************************
    // Initiate the RPi and SPI
    // ****************************************************
    if (wiringPiSetupSys() < 0) {
@@ -35,13 +31,10 @@ int main(int argc, char* argv[]) {
       fprintf(stderr, "Failed to open SPI device\n");
       exit(EXIT_FAILURE);
    }
-
-   unsigned char spibuffer[67];
-   spibuffer[0] = 0x00; // Address + read cmd bit
-	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, 66) < 0) 
-   {
-      fprintf(stderr, "Failed to open SPI device\n");
-      exit(EXIT_FAILURE);
+ 
+   if (rfm69cleanFIFO()) {
+   	fprintf(stderr, "Failed to clean FIFO\n");
+	   exit(EXIT_FAILURE);
    }
    close(fd);
    exit(EXIT_SUCCESS);
