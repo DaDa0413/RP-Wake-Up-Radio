@@ -167,7 +167,7 @@ int rfm69rxdata(unsigned char* data, unsigned int size) {
 int rfm69STDBYMode() {
 	unsigned char spibuffer[2];
 	spibuffer[0] = 0x01 | 0x80; // Address + write cmd bit
-	spibuffer[1] = 0x24; // STDBY Mode (+ terminate Listen Mode)
+	spibuffer[1] = 0x04; // STDBY Mode 
 	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, sizeof(spibuffer)) < 0)
 	{
 		fprintf(stderr, "Fail to wiringPiSPIDataRW\n");
