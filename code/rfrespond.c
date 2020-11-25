@@ -259,24 +259,27 @@ int main(int argc, char* argv[]) {
 		payload[0] = REMOTE_RFID;
 		for (int j = 1; j < 11; j++)
 			payload[j] = locrfid[IDSIZE - 1];
-		rfm69txdata(payload, 11); // write complete local RF ID
-		// wait for HW interrupt(s) and check for TX_Sent state, takes approx. 853.3µs
-		if (wiringPiISR(gpio, INT_EDGE_RISING, &myInterrupt2) < 0)
+		for (int k = 0; k < 5; k++)
 		{
-			// if(waitForInterrupt(gpio, 1) <= 0) { // wait for GPIO_xx
-			fprintf(fdlog, "Failed to wait on sent-interrupt\n");
-			fprintf(stderr, "Failed to wait on sent-interrupt\n");
-			exit(EXIT_FAILURE);
-		}
-		do {
-			usleep(1000);
-			mode = rfm69getState();
-			if (mode < 0) {
-				fprintf(fdlog, "Failed to read RFM69 Status\n");
-				fprintf(stderr, "Failed to read RFM69 Status\n");
+			rfm69txdata(payload, 11); // write complete local RF ID
+			// wait for HW interrupt(s) and check for TX_Sent state, takes approx. 853.3µs
+			if (wiringPiISR(gpio, INT_EDGE_RISING, &myInterrupt2) < 0)
+			{
+				// if(waitForInterrupt(gpio, 1) <= 0) { // wait for GPIO_xx
+				fprintf(fdlog, "Failed to wait on sent-interrupt\n");
+				fprintf(stderr, "Failed to wait on sent-interrupt\n");
 				exit(EXIT_FAILURE);
 			}
-		} while ((mode & 0x08) == 0);
+			do {
+				usleep(1000);
+				mode = rfm69getState();
+				if (mode < 0) {
+					fprintf(fdlog, "Failed to read RFM69 Status\n");
+					fprintf(stderr, "Failed to read RFM69 Status\n");
+					exit(EXIT_FAILURE);
+				}
+			} while ((mode & 0x08) == 0);
+		}
 		fprintf(fdlog,"ACKed %d. Call from Station: ",nbr);
 		fprintf(stdout,"ACKed %d. Call from Station: ",nbr++);
 		for (i = 0; i < IDSIZE; i++) {
