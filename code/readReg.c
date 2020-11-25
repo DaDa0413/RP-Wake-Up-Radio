@@ -25,9 +25,9 @@ int main(int argc, char* argv[]) {
    // Read config frome "/home/pi/myConfig" and argv
    // ****************************************************
    char config[2][30];
-   if (argc != 3)
+   if (argc != 2)
    {
-      printf("testMode regNum regValue\n");
+      printf("readReg regNum\n");
       exit(1);
    } 
    // ****************************************************
@@ -44,10 +44,9 @@ int main(int argc, char* argv[]) {
    }
 
    unsigned char spibuffer[2];
-   spibuffer[0] = strtoul(argv[1], NULL, 0) | 0x80; // Address + write cmd bit
-	spibuffer[1] = strtoul(argv[2], NULL, 0); // RX Mode
-   printf("%d %d\n", spibuffer[0], spibuffer[1]);
+   spibuffer[0] = strtoul(argv[1], NULL, 0) & 0x7f; // Address + read cmd bit
 	if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, 2) < 0) exit(2);
+   printf("%02X %02X\n", spibuffer[0], spibuffer[1]);
 
    close(fd);
    exit(EXIT_SUCCESS);
