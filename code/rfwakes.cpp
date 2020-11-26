@@ -151,9 +151,14 @@ int main(int argc, char* argv[]) {
 	int gpio;
 	unsigned char locrfid[IDSIZE], recrfid[IDSIZE];
 
-	for (int i = 0, char* ap = config[0]; i < IDSIZE; i++, ap++) {
-		locrfid[i] = strtoul(ap,&ap,16);
+	{
+		int i;
+		char *ap;
+		for (i = 0, ap = config[0]; i < IDSIZE; i++, ap++) {
+			locrfid[i] = strtoul(ap,&ap,16);
+		}
 	}
+
 	gpio = atoi(config[1]);
 
 	fprintf(stdout, "Local RFID:%s, GPIO:%d\n",config[0] , gpio); 
@@ -163,7 +168,9 @@ int main(int argc, char* argv[]) {
 
 	int counter = 0;
 	for(auto it = Targetlist.begin(); it != Targetlist.end(); it++) {
-		for (int i = 0, char* ap = it->rem; i < IDSIZE; i++, ap++) {
+		int i;
+		char* ap;
+		for (i = 0, ap = it->rem; i < IDSIZE; i++, ap++) {
 			it->remrfid[i] = strtoul(ap,&ap,16);
 		}
 		fprintf(stdout, "Wake Remote RFID[%d]: ", ++counter);
@@ -214,7 +221,7 @@ int main(int argc, char* argv[]) {
 					fprintf(stderr, "Failed to read RFM69 Status\n");
 					exit(EXIT_FAILURE);
 				}
-			} while (mode & 0x2000) == 0);
+			} while ((mode & 0x2000) == 0);
 
 			// write Tx data
 			unsigned char payload[11];
