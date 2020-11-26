@@ -14,6 +14,7 @@ if not os.geteuid()==0:
 #     print('Timed out - killing rfrespond')
 #     process.kill()
 
+time.sleep(20)
 process = subprocess.Popen(['/usr/local/bin/cleanFIFO'])
 try:
     print('[INFO] cleanFIFO: ', process.pid)
