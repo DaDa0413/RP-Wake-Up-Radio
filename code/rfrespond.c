@@ -198,7 +198,8 @@ int main(int argc, char* argv[]) {
 
 	while(1) {
 		// switch back to STDBY Mode
-		if (rfm69STDBYMode()) {
+		if (rfm69STDBYMode(locrfid))
+		{
 			fprintf(fdlog, "Failed to enter STDBY Mode\n");
 			fprintf(stderr, "Failed to enter STDBY Mode\n");
 			exit(EXIT_FAILURE);
@@ -232,7 +233,8 @@ int main(int argc, char* argv[]) {
 		} while ((mode & 0x02) == 0);
 		// intReg1 = 0;
 		// switch back to STDBY Mode
-		if (rfm69STDBYMode()) {
+		if (rfm69STDBYMode(locrfid))
+		{
 			fprintf(fdlog, "Failed to enter STDBY Mode\n");
 			fprintf(stderr, "Failed to enter STDBY Mode\n");
 			exit(EXIT_FAILURE);

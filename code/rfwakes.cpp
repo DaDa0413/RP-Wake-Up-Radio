@@ -240,7 +240,8 @@ int main(int argc, char* argv[]) {
 			fprintf(stdout, "%d. Wake-Telegram sent to %s.\n", nbr++, it->rem);
 
 			// switch back to STDBY Mode
-			if (rfm69STDBYMode()) {
+			if (rfm69STDBYMode(locrfid))
+			{
 				fprintf(stderr, "Failed to enter STDBY Mode\n");
 				exit(EXIT_FAILURE);
 			}
@@ -289,7 +290,8 @@ int main(int argc, char* argv[]) {
 				}
 			}
 			// switch back to STDBY Mode
-			if (rfm69STDBYMode()) {
+			if (rfm69STDBYMode(locrfid))
+			{
 				fprintf(stderr, "Failed to enter STDBY Mode\n");
 				exit(EXIT_FAILURE);
 			}

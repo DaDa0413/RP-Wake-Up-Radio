@@ -164,7 +164,8 @@ int rfm69rxdata(unsigned char* data, unsigned int size) {
 	return 0;
 }
 
-int rfm69STDBYMode() {
+int rfm69STDBYMode(const unsigned char *rfid)
+{
 	unsigned char spibuffer[sizeof(initvec)];
 	if (rfm69init(spibuffer, rfid))
 		return 1;
