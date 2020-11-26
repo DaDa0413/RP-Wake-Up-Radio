@@ -19,16 +19,16 @@ process = subprocess.Popen(['/usr/local/bin/cleanFIFO'])
 try:
     print('[INFO] cleanFIFO: ', process.pid)
     process.wait()
-except subprocess.TimeoutExpired:
-    print('Timed out - killing cleanFIFO')
+except:
+    print "cleanFIFO Unexpected error:", sys.exc_info()
     process.kill()
     
 process = subprocess.Popen(['/usr/local/bin/rfwait'])
 try:
     print('[INFO] rfwait: ', process.pid)
     process.wait()
-except subprocess.TimeoutExpired:
-    print('Timed out - killing rfwait')
+except:
+    print "Rfwait Unexpected error:", sys.exc_info()
     process.kill()
 
 print("Bye!\n")
