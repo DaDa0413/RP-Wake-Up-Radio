@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <signal.h>
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -96,12 +97,6 @@ void printrfid(unsigned char rfid[]) {
 	}
 }
 
-// char* toTime(std::chrono::system_clock::time_point target) {
-// 	time_t temp = std::chrono::system_clock::to_time_t(target);
-// 	char* result = ctime(&temp);
-// 	return result;
-// }
-
 char* toTime(std::chrono::system_clock::time_point target) {
 	time_t temp = std::chrono::system_clock::to_time_t(target);
 	char* result = ctime(&temp);
@@ -115,16 +110,18 @@ char* toTime(std::chrono::system_clock::time_point target) {
 
 int intReg = 0;
 void myInterrupt0(void) {if (!intReg) intReg = 1;}
+int fd;
 
+void intHandler(int signo)
+{
+	fprintf(stdout, "Receive CTRL+C\n");
+	close(fd);
+}
 
 int main(int argc, char* argv[]) {
-	int fd, gpio, i, mode, res, nbr=1, gotyou=0;
-	char *ap, *a1p;
-	unsigned char locrfid[IDSIZE], remrfid2[IDSIZE], recrfid[IDSIZE];
+	signal(SIGINT, intHandler);
 	std::vector <Target> Targetlist;
-
-	// *** Config ***
-	char config[2][30];
+	int mode;
 
 	char targetFName[256];
 	if (argc == 3)
@@ -144,48 +141,40 @@ int main(int argc, char* argv[]) {
 		fprintf(stdout, "[ERROR] Usage: rfwakes fName round [targetFile]\n");
 		exit(EXIT_FAILURE);
 	}
-	
+
+	// **************
+	// *** Config ***
+	// **************
+	char config[2][30];
 	readConfig("/home/pi/myConfig", config); 
 	Targetlist = readTargets(targetFName);
-	
+	int gpio;
+	unsigned char locrfid[IDSIZE], recrfid[IDSIZE];
 
-	for (i = 0, ap = config[0]; i < IDSIZE; i++, ap++) {
+	for (int i = 0, char* ap = config[0]; i < IDSIZE; i++, ap++) {
 		locrfid[i] = strtoul(ap,&ap,16);
 	}
 	gpio = atoi(config[1]);
-	//-----------------------------------------------------------------------
-	// *** Debug ***
-	unsigned char remrfdeb[IDSIZE];
-	for (i = 0, ap = Targetlist[0].rem; i < IDSIZE; i++, ap++) {
-		remrfdeb[i] = strtoul(ap,&ap,16);
-	}
-	//fprintf(stdout, "%u\n", remrfdeb);
-	//-----------------------------------------------------------------------
 
 	fprintf(stdout, "Local RFID:%s, GPIO:%d\n",config[0] , gpio); 
 	int round = atoi(argv[2]);
-	std::cout << "Start rfwakes at: " <<  round << " " << toTime(std::chrono::system_clock::now()) << std::endl;
+	std::cout << "Start rfwakes at: " <<  round << ", " << toTime(std::chrono::system_clock::now()) << std::endl;
 
-	//for (int i = 0, a1p = Targetlist[0].rem; i < IDSIZE; i++, a1p++) {
-	//	t.remrfid[i] = strtoul(a1p,&a1p,16);
-	//}
+
 	int counter = 0;
 	for(auto it = Targetlist.begin(); it != Targetlist.end(); it++) {
-		for (i = 0, ap = it->rem; i < IDSIZE; i++, ap++) {
-			//remrfdeb[i] = strtoul(ap,&ap,16);
+		for (int i = 0, char* ap = it->rem; i < IDSIZE; i++, ap++) {
 			it->remrfid[i] = strtoul(ap,&ap,16);
 		}
-		//memcpy(&it->remrfid, &remrfdeb, sizeof remrfdeb);
-		//----------------------------------------------------------------------
-		// *** Debug Print ***
-		//fprintf(stdout, "Wake Remote RFID[%d]:%s ", ++counter, it->rem);
 		fprintf(stdout, "Wake Remote RFID[%d]: ", ++counter);
 		printrfid(it->remrfid);
 		//----------------------------------------------------------------------
 		fprintf(stdout, "\n");
 	}
 
-	// *** Setup ***
+	// *********************
+	// *** Initial Setup ***
+	// *********************
 	if (wiringPiSetupSys() < 0) {
 		fprintf(stderr, "Failed to setup wiringPi\n");
 		exit(EXIT_FAILURE);
@@ -195,30 +184,44 @@ int main(int argc, char* argv[]) {
 		fprintf(stderr, "Failed to open SPI device\n");
 		exit(EXIT_FAILURE);
 	}
-
-	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
 	if (wiringPiISR(gpio, INT_EDGE_RISING, &myInterrupt0) < 0)
 	{
 		fprintf(stdout, "Failed to set gpio to wiringPiISR\n");
 		exit(EXIT_FAILURE);
 	}
-	
+
+	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
+
+	int nbr = 1, gotyou = 0;
 	do {
 		for (auto it = Targetlist.begin(); it != Targetlist.end();) {
 			unsigned char remrfid[IDSIZE];
 			memcpy(&remrfid, &it->remrfid, sizeof it->remrfid);
+			// ********************
 			// *** Transmission ***
+			// ********************
 			// prepare for TX
 			if (rfm69startTxMode(remrfid)) {
 				fprintf(stderr, "Failed to enter TX Mode\n");
 				exit(EXIT_FAILURE);
 			}
+
+			do
+			{
+				mode = rfm69getState();
+				if (mode < 0)
+				{
+					fprintf(stderr, "Failed to read RFM69 Status\n");
+					exit(EXIT_FAILURE);
+				}
+			} while (mode & 0x2000) == 0);
+
 			// write Tx data
 			unsigned char payload[11];
 			for (int j = 0; j < 11; j++)
 				payload[j] = remrfid[IDSIZE-1];
 			rfm69txdata(payload, 11);
-			// wait for HW interrupt(s) and check for TX_Sent state, takes approx. 853.3�s
+			// Wait for TX_Sent, takes approx. 853.3 micro-second
 			do {
 				usleep(1000);
 				mode = rfm69getState();
@@ -245,16 +248,15 @@ int main(int argc, char* argv[]) {
 			// wait for HW interrupt(s) and check for CRC_Ok state
 			usleep(84000);
 			if (intReg == 1) { // in case of reception ...
-				mode = rfm69getState();
+				int mode = rfm69getState();
 				if (mode < 0) {
 					fprintf(stderr, "Failed to read RFM69 Status\n");
 					exit(EXIT_FAILURE);
 				}
-				if ((mode & 0x02) == 0x02) { // ... and CrcOk ...
+				if ((mode & 0x02) == 0x02) { // Check CrcOk
 					// read remote RF ID from FIFO
 					memset(payload, 0, 11);
-					rfm69rxdata(payload, 11); // skip last byte of called RF ID
-
+					rfm69rxdata(payload, 11); 
 					fprintf(stdout, "Received payload:");
 					for (int i = 0; i < 11; i++) {
 						if(i != 0) fprintf(stdout,":");
@@ -262,8 +264,8 @@ int main(int argc, char* argv[]) {
 					}
 					fprintf(stdout, "\n");
 
-					// check received vs. called remote RF ID
-					for(std::vector <Target>::iterator it2= Targetlist.begin(); it2 != Targetlist.end(); it2++)
+					// Compare remote RFID with targetList
+					for(std::vector <Target>::iterator it2 = Targetlist.begin(); it2 != Targetlist.end(); it2++)
 					{					
 						gotyou = 1;
 						unsigned char temp = it2->remrfid[IDSIZE - 1];
