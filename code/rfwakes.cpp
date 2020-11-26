@@ -116,6 +116,7 @@ void intHandler(int signo)
 {
 	fprintf(stdout, "Receive CTRL+C\n");
 	close(fd);
+	exit(EXIT_SUCCESS);
 }
 
 int main(int argc, char* argv[]) {
