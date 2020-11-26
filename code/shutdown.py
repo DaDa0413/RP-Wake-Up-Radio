@@ -19,7 +19,7 @@ try:
     print('[INFO] cleanFIFO: ', process.pid)
     process.wait()
 except subprocess.CalledProcessError as e:
-    print "cleanFIFO Unexpected error:", e.output
+    print("cleanFIFO Unexpected error:", e.output)
     process.kill()
     
 process = subprocess.Popen(['/usr/local/bin/rfwait'])
@@ -27,7 +27,7 @@ try:
     print('[INFO] rfwait: ', process.pid)
     process.wait()
 except subprocess.CalledProcessError as e:
-    print "Rfwait Unexpected error:", e.output
+    print("Rfwait Unexpected error:", e.output)
     process.kill()
 
 print("Bye!\n")
