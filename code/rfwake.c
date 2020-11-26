@@ -95,7 +95,7 @@ int main(int argc, char* argv[]) {
       // write Tx data
       rfm69txdata(&remrfid[IDSIZE-1],1);
       rfm69txdata(locrfid,IDSIZE);
-      // wait for HW interrupt(s) and check for TX_Sent state, takes approx. 853.3µs
+      // wait for HW interrupt(s) and check for TX_Sent state, takes approx. 853.3ï¿½s
       do {
          if(waitForInterrupt(gpio, 1) <= 0) { // wait for GPIO_xx
             fprintf(stderr, "Failed to wait on TX interrupt\n");
@@ -110,7 +110,7 @@ int main(int argc, char* argv[]) {
       fprintf(stdout, "%d. Wake-Telegram sent.\n", nbr++);
 
       // switch back to STDBY Mode
-      if (rfm69STDBYMode()) {
+      if (rfm69STDBYMode(locrfid)) {
          fprintf(stderr, "Failed to enter STDBY Mode\n");
          exit(EXIT_FAILURE);
       }
@@ -152,7 +152,7 @@ int main(int argc, char* argv[]) {
          }
       }
       // switch back to STDBY Mode
-      if (rfm69STDBYMode()) {
+      if (rfm69STDBYMode(locrfid)) {
          fprintf(stderr, "Failed to enter STDBY Mode\n");
          exit(EXIT_FAILURE);
       }
