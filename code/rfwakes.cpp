@@ -203,7 +203,6 @@ int main(int argc, char* argv[]) {
 	int nbr = 1, gotyou = 0;
 	do {
 		for (auto it = Targetlist.begin(); it != Targetlist.end();) {
-			std::vector <Target>::iterator it2; // used to print ACK src
 			unsigned char remrfid[IDSIZE];
 			memcpy(&remrfid, &it->remrfid, sizeof it->remrfid);
 			// ********************
@@ -275,7 +274,7 @@ int main(int argc, char* argv[]) {
 					fprintf(stdout, "\n");
 
 					// Compare remote RFID with targetList
-					for(it2 = Targetlist.begin(); it2 != Targetlist.end(); it2++)
+					for(std::vector <Target>::iterator it2 = Targetlist.begin(); it2 != Targetlist.end(); it2++)
 					{					
 						gotyou = 1;
 						unsigned char temp = it2->remrfid[IDSIZE - 1];
@@ -284,6 +283,7 @@ int main(int argc, char* argv[]) {
 								gotyou = 0;
 						if (gotyou == 1)
 						{
+							it = it2;
 							break;
 						}
 						
@@ -304,7 +304,7 @@ int main(int argc, char* argv[]) {
 			else {
 				// output of remote RF ID
 				fprintf(stdout, "ACK received from called Station RF ID ");
-				printrfid(it2->remrfid);
+				printrfid(it->remrfid);
 				fprintf(stdout,"\n");
 				
 				// write into log file
@@ -315,7 +315,7 @@ int main(int argc, char* argv[]) {
 				auto now = std::chrono::system_clock::now();
 				std::chrono::duration<double> elapsed_seconds = now-startTime;
 
-				flog << "\"" << it2->rem << "\"," << round << ",\"" << toTime(now) << "\",\"" 
+				flog << "\"" << it->rem << "\"," << round << ",\"" << toTime(now) << "\",\"" 
 				<< toTime(startTime) << "\"," << elapsed_seconds.count() <<" \r\n";
 				flog.close();
 				// recover `gotyou` switch

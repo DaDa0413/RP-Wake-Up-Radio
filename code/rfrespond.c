@@ -285,15 +285,10 @@ int main(int argc, char* argv[]) {
 				exit(1);
 			}
 			struct timeval delay;
-
-				srand(time(NULL) + locrfid[IDSIZE - 1]);
-
-		delay.tv_sec =0;
-
-		delay.tv_usec =10 * 1000 * (rand() % 100 + 1); // 10 ms
-
-		select(0, NULL,NULL, NULL, &delay);
-			// usleep((rand() % 100 + 1) * 10000);
+			srand(time(NULL) + locrfid[IDSIZE - 1]);
+			delay.tv_sec =0;
+			delay.tv_usec =10 * 1000 * (rand() % 10 + 1); // 10 ms
+			select(0, NULL,NULL, NULL, &delay);
 		}
 		fprintf(fdlog,"ACKed %d. Call from Station: ",nbr);
 		fprintf(stdout,"ACKed %d. Call from Station: ",nbr++);
