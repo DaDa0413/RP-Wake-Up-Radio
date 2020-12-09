@@ -6,15 +6,15 @@ import subprocess
 if not os.geteuid()==0:
     sys.exit("Hint: call me as root")
 
-# process = subprocess.Popen(['/usr/local/bin/rfrespond'])
-# try:
-#     print('[INFO] rfespond: ', process.pid)
-#     process.wait(timeout=15)
-# except subprocess.TimeoutExpired:
-#     print('Timed out - killing rfrespond')
-#     process.kill()
+process = subprocess.Popen(['/usr/local/bin/rfrespond'])
+try:
+    print('[INFO] rfespond: ', process.pid)
+    process.wait(timeout=15)
+except subprocess.TimeoutExpired:
+    print('Timed out - killing rfrespond')
+    process.kill()
 
-time.sleep(20)
+time.sleep(10)
 process = subprocess.Popen(['/usr/local/bin/cleanFIFO'])
 try:
     print('[INFO] cleanFIFO: ', process.pid)

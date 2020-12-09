@@ -237,7 +237,7 @@ int main(int argc, char* argv[]) {
 					fprintf(stderr, "Failed to read RFM69 Status\n");
 					exit(EXIT_FAILURE);
 				}
-			} while ((mode & 0x08) == 0);
+			} while ((mode & 0x08) == 0 || (mode & 0x40) == 1);
 			fprintf(stdout, "%d. Wake-Telegram sent to %s.\n", nbr++, it->rem);
 
 			// switch back to STDBY Mode

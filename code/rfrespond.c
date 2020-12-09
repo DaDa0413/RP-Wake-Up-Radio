@@ -211,19 +211,10 @@ int main(int argc, char* argv[]) {
 			fprintf(stderr, "Failed to enter RX Mode\n");
 			exit(EXIT_FAILURE);
 		}
-		// wait for HW interrupt(s) and check for CRC_Ok state
-		// if (wiringPiISR(gpio, INT_EDGE_RISING, &myInterrupt1) < 0)
-		// {
-		// 	fprintf(fdlog, "Failed to wait for RX interrupt\n");
-		// 	fprintf(stderr, "Failed to wait for RX interrupt\n");
-		// 	exit(EXIT_FAILURE);
-		// }
+		// Check for CRC_Ok state
 		do {
-			// res = waitForInterrupt(gpio, 86); // wait for GPIO_xx
 			rfm69restartRx();
 			usleep(86000);
-			// if (intReg1 == 0)
-				// rfm69restartRx();
 			mode = rfm69getState();
 			if (mode < 0) {
 				fprintf(fdlog, "Failed to read RFM69 Status\n");
@@ -231,7 +222,6 @@ int main(int argc, char* argv[]) {
 				exit(EXIT_FAILURE);
 			}
 		} while ((mode & 0x02) == 0);
-		// intReg1 = 0;
 		// switch back to STDBY Mode
 		if (rfm69STDBYMode(locrfid))
 		{
@@ -241,7 +231,6 @@ int main(int argc, char* argv[]) {
 		}
 		delay(20);
 
-		// *** Send ACK ***
 		// read remote RF ID from FIFO
 		unsigned char payload[11];
 		rfm69rxdata(payload, 11); // skip last byte of called RF ID
@@ -262,6 +251,7 @@ int main(int argc, char* argv[]) {
 		}
 		if (!same)
 			continue;
+		// *** Send ACK ***
 		// prepare for TX
 		if (rfm69startTxMode(remrfid)) {
 			fprintf(fdlog, "Failed to enter TX Mode\n");
@@ -275,14 +265,6 @@ int main(int argc, char* argv[]) {
 		for (int k = 0; k < 5; k++)
 		{
 			rfm69txdata(payload, 11); // write complete local RF ID
-			// wait for HW interrupt(s) and check for TX_Sent state, takes approx. 853.3µs
-			// if (wiringPiISR(gpio, INT_EDGE_RISING, &myInterrupt2) < 0)
-			// {
-			// 	// if(waitForInterrupt(gpio, 1) <= 0) { // wait for GPIO_xx
-			// 	fprintf(fdlog, "Failed to wait on sent-interrupt\n");
-			// 	fprintf(stderr, "Failed to wait on sent-interrupt\n");
-			// 	exit(EXIT_FAILURE);
-			// }
 			do {
 				usleep(1000);
 				mode = rfm69getState();
@@ -315,12 +297,12 @@ int main(int argc, char* argv[]) {
 		fprintf(stdout,"\n");
 		fflush(fdlog);
 		fflush(stdout);
-		// guarantee < 1% air time
-		delay(85);
-		close(fdspi);
-		fclose(fdlog);
-		fclose(stdout);
-		fclose(stderr);
-		exit(EXIT_SUCCESS);
 	}
+	// guarantee < 1% air time
+	delay(85);
+	close(fdspi);
+	fclose(fdlog);
+	fclose(stdout);
+	fclose(stderr);
+	exit(EXIT_SUCCESS);
 }
