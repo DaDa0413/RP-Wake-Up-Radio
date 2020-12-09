@@ -93,37 +93,11 @@ int main(int argc, char* argv[]) {
       exit(EXIT_FAILURE);
    }
 
-   // *** Reception ***
-   // switch to STDBY Mode
-   /*if (rfm69STDBYMode()) {
-   	fprintf(stdout, "Failed to enter STDBY Mode\n");
-	exit(EXIT_FAILURE);
-   }*/
-   
-   // ****************************************************
-   // Start rfm69 with RX mode, pass RFID as argument
-   // ****************************************************
-   // if (rfm69startRxMode(rfid)) {
-   // 	fprintf(stderr, "Failed to enter RX Mode\n");
-	//    exit(EXIT_FAILURE);
-   // }
-
    if (rfm69ListenMode(rfid)) {
    	fprintf(stderr, "Failed to enter Listen Mode\n");
 	   exit(EXIT_FAILURE);
    }
 
-   // if (rfm69setAutoModes())
-   // {
-   //    fprintf(stderr, "Failed to set auto mode\n");
-   //    exit(EXIT_FAILURE);
-   // }
-   /*
-   // switch to Listen (DRX) Mode
-   if (rfm69ListenMode(rfid)) {
-      fprintf(stderr, "Failed to enter Listen Mode\n");
-      exit(EXIT_FAILURE);
-   }*/
 
    close(fd);
    exit(EXIT_SUCCESS);
