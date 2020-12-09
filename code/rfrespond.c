@@ -286,12 +286,13 @@ int main(int argc, char* argv[]) {
 			}
 			struct timeval delay;
 
+				srand(time(NULL) + locrfid[IDSIZE - 1]);
+
 		delay.tv_sec =0;
 
-		delay.tv_usec =10 * 1000; // 10 ms
+		delay.tv_usec =10 * 1000 * (rand() % 100 + 1); // 10 ms
 
 		select(0, NULL,NULL, NULL, &delay);
-			// srand(time(NULL) + locrfid[IDSIZE - 1]);
 			// usleep((rand() % 100 + 1) * 10000);
 		}
 		fprintf(fdlog,"ACKed %d. Call from Station: ",nbr);
