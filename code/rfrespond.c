@@ -11,6 +11,7 @@ of the License, or (at your option) any later version.
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <time.h>
 
 #ifndef RFM69BIOS_H
 #include "rfm69bios.h"
@@ -274,14 +275,17 @@ int main(int argc, char* argv[]) {
 					exit(EXIT_FAILURE);
 				}
 			} while ((mode & 0x08) == 0 || (mode & 0x40) == 1);
+			// Clear RegIrqFlags2 
 			unsigned char spibuffer[2];
-			spibuffer[0] = 0x28 | 0x80;
+			spibuffer[0] = 0x28 | 0x80;  // address + write command
 			spibuffer[1] = 0x00;
 			if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, 2) < 0)
 			{
 				fprintf(stderr, "Fail to clear RegIrqFlags\n");
 				exit(1);
 			}
+			srand(time(NULL) + locrfid[IDSIZE - 1]);
+			usleep((rand() % 100 + 1) * 10000);
 		}
 		fprintf(fdlog,"ACKed %d. Call from Station: ",nbr);
 		fprintf(stdout,"ACKed %d. Call from Station: ",nbr++);
