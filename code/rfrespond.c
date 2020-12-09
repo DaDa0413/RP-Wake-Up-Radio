@@ -284,8 +284,15 @@ int main(int argc, char* argv[]) {
 				fprintf(stderr, "Fail to clear RegIrqFlags\n");
 				exit(1);
 			}
-			srand(time(NULL) + locrfid[IDSIZE - 1]);
-			usleep((rand() % 100 + 1) * 10000);
+			struct timeval delay;
+
+		delay.tv_sec =0;
+
+		delay.tv_usec =10 * 1000; // 10 ms
+
+		select(0, NULL,NULL, NULL, &delay);
+			// srand(time(NULL) + locrfid[IDSIZE - 1]);
+			// usleep((rand() % 100 + 1) * 10000);
 		}
 		fprintf(fdlog,"ACKed %d. Call from Station: ",nbr);
 		fprintf(stdout,"ACKed %d. Call from Station: ",nbr++);
