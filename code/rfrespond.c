@@ -265,6 +265,12 @@ int main(int argc, char* argv[]) {
 			payload[j] = locrfid[IDSIZE - 1];
 		for (int k = 0; k < 5; k++)
 		{
+			struct timeval delay;
+			srand(time(NULL) + locrfid[IDSIZE - 1]);
+			delay.tv_sec =0;
+			delay.tv_usec = 1000 * (rand() % 1000 + 1); // 1 ms ~ 1s
+			select(0, NULL,NULL, NULL, &delay);
+			
 			rfm69txdata(payload, 11); // write complete local RF ID
 			do {
 				usleep(1000);
@@ -284,11 +290,6 @@ int main(int argc, char* argv[]) {
 				fprintf(stderr, "Fail to clear RegIrqFlags\n");
 				exit(1);
 			}
-			struct timeval delay;
-			srand(time(NULL) + locrfid[IDSIZE - 1]);
-			delay.tv_sec =0;
-			delay.tv_usec =10 * 1000 * (rand() % 10 + 1); // 10 ms
-			select(0, NULL,NULL, NULL, &delay);
 		}
 		fprintf(fdlog,"ACKed %d. Call from Station: ",nbr);
 		fprintf(stdout,"ACKed %d. Call from Station: ",nbr++);

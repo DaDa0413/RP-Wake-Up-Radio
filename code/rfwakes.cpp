@@ -202,7 +202,7 @@ int main(int argc, char* argv[]) {
 
 	int nbr = 1, gotyou = 0;
 	do {
-		for (auto it = Targetlist.begin(); it != Targetlist.end();) {
+		for (auto it = Targetlist.begin(); it != Targetlist.end(); it++) {
 			unsigned char remrfid[IDSIZE];
 			memcpy(&remrfid, &it->remrfid, sizeof it->remrfid);
 			// ********************
@@ -246,83 +246,80 @@ int main(int argc, char* argv[]) {
 				fprintf(stderr, "Failed to enter STDBY Mode\n");
 				exit(EXIT_FAILURE);
 			}
-			// *** Reception ***
-			// prepare for RX
-			intReg = 0;
-			if (rfm69startRxMode(locrfid)) {
-				fprintf(stderr, "Failed to enter RX Mode\n");
+		}
+
+		// *** Reception ***
+		// prepare for RX
+		intReg = 0;
+		if (rfm69startRxMode(locrfid)) {
+			fprintf(stderr, "Failed to enter RX Mode\n");
+			exit(EXIT_FAILURE);
+		}
+
+		// wait for HW interrupt(s) and check for CRC_Ok state
+		std::vector <Target>::iterator it2;
+		usleep(84000);
+		if (intReg == 1) { // in case of reception ...
+			int mode = rfm69getState();
+			if (mode < 0) {
+				fprintf(stderr, "Failed to read RFM69 Status\n");
 				exit(EXIT_FAILURE);
 			}
-
-			// wait for HW interrupt(s) and check for CRC_Ok state
-			usleep(84000);
-			if (intReg == 1) { // in case of reception ...
-				int mode = rfm69getState();
-				if (mode < 0) {
-					fprintf(stderr, "Failed to read RFM69 Status\n");
-					exit(EXIT_FAILURE);
+			if ((mode & 0x02) == 0x02) { // Check CrcOk
+				// read remote RF ID from FIFO
+				unsigned char payload[11];
+				memset(payload, 0, 11);
+				rfm69rxdata(payload, 11); 
+				fprintf(stdout, "Received payload:");
+				for (int i = 0; i < 11; i++) {
+					if(i != 0) fprintf(stdout,":");
+					fprintf(stdout, "%02x", payload[i]);
 				}
-				if ((mode & 0x02) == 0x02) { // Check CrcOk
-					// read remote RF ID from FIFO
-					memset(payload, 0, 11);
-					rfm69rxdata(payload, 11); 
-					fprintf(stdout, "Received payload:");
-					for (int i = 0; i < 11; i++) {
-						if(i != 0) fprintf(stdout,":");
-						fprintf(stdout, "%02x", payload[i]);
-					}
-					fprintf(stdout, "\n");
+				fprintf(stdout, "\n");
 
-					// Compare remote RFID with targetList
-					for(std::vector <Target>::iterator it2 = Targetlist.begin(); it2 != Targetlist.end(); it2++)
-					{					
-						gotyou = 1;
-						unsigned char temp = it2->remrfid[IDSIZE - 1];
-						for (int j = 1; j < 11; j++)
-							if (temp != payload[j]) 
-								gotyou = 0;
-						if (gotyou == 1)
-						{
-							it = it2;
-							break;
-						}
-						
-					}
+				// Compare remote RFID with targetList
+				for(it2 = Targetlist.begin(); it2 != Targetlist.end(); it2++)
+				{					
+					gotyou = 1;
+					unsigned char temp = it2->remrfid[IDSIZE - 1];
+					for (int j = 1; j < 11; j++)
+						if (temp != payload[j]) 
+							gotyou = 0;
+					if (gotyou == 1)
+						break;					
 				}
-			}
-			// switch back to STDBY Mode
-			if (rfm69STDBYMode(locrfid))
-			{
-				fprintf(stderr, "Failed to enter STDBY Mode\n");
-				exit(EXIT_FAILURE);
-			}
-
-			// if not receive ACK
-			if (gotyou == 0) {
-				++it;
-			}
-			else {
-				// output of remote RF ID
-				fprintf(stdout, "ACK received from called Station RF ID ");
-				printrfid(it->remrfid);
-				fprintf(stdout,"\n");
-				
-				// write into log file
-				std::fstream flog;
-				std::string name = std::string("ack_") + argv[1];
-				flog.open (LogDIR + name + ".csv", std::fstream::in | std::fstream::out | std::fstream::app);	    	
-
-				auto now = std::chrono::system_clock::now();
-				std::chrono::duration<double> elapsed_seconds = now-startTime;
-
-				flog << "\"" << it->rem << "\"," << round << ",\"" << toTime(now) << "\",\"" 
-				<< toTime(startTime) << "\"," << elapsed_seconds.count() <<" \r\n";
-				flog.close();
-				// recover `gotyou` switch
-				gotyou = 0;
-				it = Targetlist.erase(it);
 			}
 		}
+		// switch back to STDBY Mode
+		if (rfm69STDBYMode(locrfid))
+		{
+			fprintf(stderr, "Failed to enter STDBY Mode\n");
+			exit(EXIT_FAILURE);
+		}
+
+		// if not receive ACK
+		if (gotyou) {
+			// output of remote RF ID
+			fprintf(stdout, "ACK received from called Station RF ID ");
+			printrfid(it2->remrfid);
+			fprintf(stdout,"\n");
+			
+			// write into log file
+			std::fstream flog;
+			std::string name = std::string("ack_") + argv[1];
+			flog.open (LogDIR + name + ".csv", std::fstream::in | std::fstream::out | std::fstream::app);	    	
+
+			auto now = std::chrono::system_clock::now();
+			std::chrono::duration<double> elapsed_seconds = now-startTime;
+
+			flog << "\"" << it2->rem << "\"," << round << ",\"" << toTime(now) << "\",\"" 
+			<< toTime(startTime) << "\"," << elapsed_seconds.count() <<" \r\n";
+			flog.close();
+			// recover `gotyou` switch
+			gotyou = 0;
+			Targetlist.erase(it2);
+		}
+		
 	} while(!Targetlist.empty());
 
 
