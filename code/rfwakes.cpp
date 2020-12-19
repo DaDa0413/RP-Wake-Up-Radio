@@ -246,6 +246,12 @@ int main(int argc, char* argv[]) {
 				fprintf(stderr, "Failed to enter STDBY Mode\n");
 				exit(EXIT_FAILURE);
 			}
+
+			struct timeval delay;
+			srand(time(NULL) + locrfid[IDSIZE - 1]);
+			delay.tv_sec = 0;
+			delay.tv_usec = 85;
+			select(0, NULL,NULL, NULL, &delay);
 		}
 
 		// *** Reception ***
