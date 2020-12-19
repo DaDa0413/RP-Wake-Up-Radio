@@ -268,7 +268,7 @@ int main(int argc, char* argv[]) {
 			struct timeval delay;
 			srand(time(NULL) + locrfid[IDSIZE - 1]);
 			delay.tv_sec =0;
-			delay.tv_usec = 1000 * (rand() % 1000 + 1); // 1 ms ~ 1s
+			delay.tv_usec = 10000 * (rand() % 100 + 1); // 10 ms ~ 1s
 			select(0, NULL,NULL, NULL, &delay);
 			
 			rfm69txdata(payload, 11); // write complete local RF ID
