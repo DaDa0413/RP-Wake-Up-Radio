@@ -28,6 +28,8 @@
 #define LogDIR "/home/pi/Desktop/log/"
 #define roundDIR "/home/pi/Desktop/log/round"
 #define startPATH "/home/pi/Desktop/log/startWakeTime.csv"
+
+int self_pipe_fd[2];
 struct Target {
 	char rem[30];	
 	unsigned char remrfid[IDSIZE];
@@ -108,8 +110,15 @@ char* toTime(std::chrono::system_clock::time_point target) {
 	return result;
 }
 
-int intReg = 0;
-void myInterrupt0(void) {if (!intReg) intReg = 1;}
+int intReg = 1;
+void myInterrupt0(void) 
+{
+	if (!intReg) 
+	{
+		intReg = 1;
+		write(self_pipe_fd[1], "x", 1);	
+	}
+}
 int fd;
 
 void intHandler(int signo)
@@ -246,7 +255,7 @@ int main(int argc, char* argv[]) {
 				fprintf(stderr, "Failed to enter STDBY Mode\n");
 				exit(EXIT_FAILURE);
 			}
-
+		
 			struct timeval delay;
 			srand(time(NULL) + locrfid[IDSIZE - 1]);
 			delay.tv_sec = 0;
@@ -256,6 +265,14 @@ int main(int argc, char* argv[]) {
 
 		// *** Reception ***
 		// prepare for RX
+		if (pipe(self_pipe_fd) < 0)
+		{
+			fprintf(stderr, "Fail ot open pipe\n");
+			exit(EXIT_FAILURE);
+		}
+		fd_set rfds;
+		FD_ZERO(&rfds);
+		FD_SET(self_pipe_fd[0], &rfds);
 		intReg = 0;
 		if (rfm69startRxMode(locrfid)) {
 			fprintf(stderr, "Failed to enter RX Mode\n");
@@ -264,7 +281,16 @@ int main(int argc, char* argv[]) {
 
 		// wait for HW interrupt(s) and check for CRC_Ok state
 		std::vector <Target>::iterator it2;
-		usleep(84000);
+
+		struct timeval delay;
+		srand(time(NULL) + locrfid[IDSIZE - 1]);
+		delay.tv_sec = 0;
+		delay.tv_usec = 84000; // 84 ms
+		select(self_pipe_fd[0] + 1, &rfds,NULL, NULL, &delay);
+		close(self_pipe_fd[0]);
+		close(self_pipe_fd[1]);
+
+
 		if (intReg == 1) { // in case of reception ...
 			int mode = rfm69getState();
 			if (mode < 0) {
