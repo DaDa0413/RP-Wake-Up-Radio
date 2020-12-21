@@ -252,6 +252,21 @@ int main(int argc, char* argv[]) {
 		}
 		if (!same)
 			continue;
+		fprintf(fdlog,"ACKed %d. Call from Station: ",nbr);
+		fprintf(stdout,"ACKed %d. Call from Station: ",nbr++);
+		for (i = 0; i < IDSIZE; i++) {
+			if(i != 0) {
+				fprintf(fdlog,":");
+				fprintf(stdout,":");
+			}
+			fprintf(fdlog, "%02x", remrfid[i]);
+			fprintf(stdout, "%02x", remrfid[i]);
+		}
+		fprintf(fdlog,"\n");
+		fprintf(stdout,"\n");
+		fflush(fdlog);
+		fflush(stdout);
+		
 		// *** Send ACK ***
 		// prepare for TX
 		if (rfm69startTxMode(remrfid)) {
@@ -268,7 +283,7 @@ int main(int argc, char* argv[]) {
 			struct timeval delay;
 			srand(time(NULL) + locrfid[IDSIZE - 1]);
 			delay.tv_sec =0;
-			delay.tv_usec = 10000 * (rand() % 100 + 1); // 10 ms ~ 1s
+			delay.tv_usec = 10000 * (rand() % 400 + 1); // 10 ms ~ 1s
 			select(0, NULL,NULL, NULL, &delay);
 			
 			rfm69txdata(payload, 11); // write complete local RF ID
@@ -291,20 +306,6 @@ int main(int argc, char* argv[]) {
 				exit(1);
 			}
 		}
-		fprintf(fdlog,"ACKed %d. Call from Station: ",nbr);
-		fprintf(stdout,"ACKed %d. Call from Station: ",nbr++);
-		for (i = 0; i < IDSIZE; i++) {
-			if(i != 0) {
-				fprintf(fdlog,":");
-				fprintf(stdout,":");
-			}
-			fprintf(fdlog, "%02x", remrfid[i]);
-			fprintf(stdout, "%02x", remrfid[i]);
-		}
-		fprintf(fdlog,"\n");
-		fprintf(stdout,"\n");
-		fflush(fdlog);
-		fflush(stdout);
 	}
 	// guarantee < 1% air time
 	delay(85);
