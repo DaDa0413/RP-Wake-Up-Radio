@@ -140,61 +140,93 @@ int main(int argc, char* argv[]) {
 		exit(EXIT_FAILURE);
 	}
 
-	if (mode == 0x00048060) {
+	if ((mode & 0x02) == 1) {
 		fprintf(fdlog, "Received WuR while packet was sleeping\n");
 		fprintf(stdout, "Received WuR while packet was sleeping\n");
-		// *** Send ACK ***
-		// read remote RF ID from FIFO
-		unsigned char payload[12];
-		payload[11] = '\0';
-		rfm69rxdata(payload, 11); // skip last byte of called RF ID
-		fprintf(fdlog, "Received payload: %s\n", payload);
-		fprintf(stdout, "Received payload: %s\n", payload);
-		// prepare for TX
-		if (rfm69startTxMode(remrfid)) {
-			fprintf(fdlog, "Failed to enter TX Mode\n");
-			fprintf(stderr, "Failed to enter TX Mode\n");
+
+		if (rfm69STDBYMode(locrfid))
+		{
+			fprintf(fdlog, "Failed to enter STDBY Mode\n");
+			fprintf(stderr, "Failed to enter STDBY Mode\n");
 			exit(EXIT_FAILURE);
 		}
+		delay(20);
 
-		// write Tx data
-		payload[0] = REMOTE_RFID;
-		for (int j = 1; j < 11; j++)
-			payload[j] = locrfid[IDSIZE - 1];
-		rfm69txdata(payload, 11); // write complete local RF ID
-		// wait for HW interrupt(s) and check for TX_Sent state, takes approx. 853.3µs
-		// if (wiringPiISR(gpio, INT_EDGE_RISING, &myInterrupt0) < 0)
-		// {
-		// 	// if(waitForInterrupt(gpio, 1) <= 0) { // wait for GPIO_xx
-		// 	fprintf(fdlog, "Failed to wait for TX interrupt\n");
-		// 	fprintf(stderr, "Failed to wait for TX interrupt\n");
-		// 	exit(EXIT_FAILURE);
-		// }
-		do {
-				usleep(1000);
-
-			mode = rfm69getState();
-			if (mode < 0) {
-				fprintf(fdlog, "Failed to read RFM69 Status\n");
-				fprintf(stderr, "Failed to read RFM69 Status\n");
-				exit(EXIT_FAILURE);
-			}   
-		} while ((mode & 0x08) == 0);
-
-		fprintf(fdlog,"ACKed Wake-Up Call from Station: ");
-		fprintf(stdout,"ACKed Wake-Up Call from Station: ");
-		for (i = 0; i < IDSIZE; i++) {
-			if(i != 0) {
-				fprintf(fdlog,":");
-				fprintf(stdout,":");
-			}
-			fprintf(fdlog, "%02x", remrfid[i]);
-			fprintf(stdout, "%02x", remrfid[i]);
+		// read remote RF ID from FIFO
+		unsigned char payload[11];
+		rfm69rxdata(payload, 11); // skip last byte of called RF ID
+		fprintf(fdlog, "Received payload: %s\n", payload);
+		fprintf(stdout, "Received payload:");
+		for (int i = 0; i < 11; i++) {
+			if(i != 0) fprintf(stdout,":");
+			fprintf(stdout, "%02x", payload[i]);
 		}
-		fprintf(fdlog,"\n");
-		fprintf(stdout,"\n");
-		fflush(fdlog);
-		fflush(stdout);
+		fprintf(stdout, "\n");
+		int same = 1;
+		for (int i = 0; i < 11; i++) {
+			if (payload[i] != locrfid[IDSIZE - 1])
+			{
+				same = 0;
+				break;
+			}
+		}
+		if (same)
+		{
+			fprintf(fdlog,"ACKed %d. Call from Station: ",nbr);
+			fprintf(stdout,"ACKed %d. Call from Station: ",nbr++);
+			for (i = 0; i < IDSIZE; i++) {
+				if(i != 0) {
+					fprintf(fdlog,":");
+					fprintf(stdout,":");
+				}
+				fprintf(fdlog, "%02x", remrfid[i]);
+				fprintf(stdout, "%02x", remrfid[i]);
+			}
+			fprintf(fdlog,"\n");
+			fprintf(stdout,"\n");
+			fflush(fdlog);
+			fflush(stdout);
+
+			// *** Send ACK ***
+			// prepare for TX
+			if (rfm69startTxMode(remrfid)) {
+				fprintf(fdlog, "Failed to enter TX Mode\n");
+				fprintf(stderr, "Failed to enter TX Mode\n");
+				exit(EXIT_FAILURE);
+			}
+			// write Tx data
+			payload[0] = REMOTE_RFID;
+			for (int j = 1; j < 11; j++)
+				payload[j] = locrfid[IDSIZE - 1];
+			for (int k = 0; k < 5; k++)
+			{
+				struct timeval delay;
+				srand(time(NULL) + locrfid[IDSIZE - 1]);
+				delay.tv_sec =0;
+				delay.tv_usec = 10000 * (rand() % 400 + 1); // 10 ms ~ 1s
+				select(0, NULL,NULL, NULL, &delay);
+				
+				rfm69txdata(payload, 11); // write complete local RF ID
+				do {
+					usleep(1000);
+					mode = rfm69getState();
+					if (mode < 0) {
+						fprintf(fdlog, "Failed to read RFM69 Status\n");
+						fprintf(stderr, "Failed to read RFM69 Status\n");
+						exit(EXIT_FAILURE);
+					}
+				} while ((mode & 0x08) == 0 || (mode & 0x40) == 1);
+				// Clear RegIrqFlags2 
+				unsigned char spibuffer[2];
+				spibuffer[0] = 0x28 | 0x80;  // address + write command
+				spibuffer[1] = 0x00;
+				if (wiringPiSPIDataRW(SPI_DEVICE, spibuffer, 2) < 0)
+				{
+					fprintf(stderr, "Fail to clear RegIrqFlags\n");
+					exit(1);
+				}
+			}
+		}
 	}
 
 	while(1) {
