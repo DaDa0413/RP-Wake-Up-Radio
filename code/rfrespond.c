@@ -140,7 +140,7 @@ int main(int argc, char* argv[]) {
 		exit(EXIT_FAILURE);
 	}
 
-	if ((mode & 0x02) == 1) {
+	if ((mode & 0x02) == 0x02) {
 		fprintf(fdlog, "Received WuR while packet was sleeping\n");
 		fprintf(stdout, "Received WuR while packet was sleeping\n");
 
@@ -194,6 +194,15 @@ int main(int argc, char* argv[]) {
 				fprintf(stderr, "Failed to enter TX Mode\n");
 				exit(EXIT_FAILURE);
 			}
+			do
+			{
+				mode = rfm69getState();
+				if (mode < 0)
+				{
+					fprintf(stderr, "Failed to read RFM69 Status\n");
+					exit(EXIT_FAILURE);
+				}
+			} while ((mode & 0x2000) == 0);
 			// write Tx data
 			payload[0] = REMOTE_RFID;
 			for (int j = 1; j < 11; j++)
@@ -215,7 +224,7 @@ int main(int argc, char* argv[]) {
 						fprintf(stderr, "Failed to read RFM69 Status\n");
 						exit(EXIT_FAILURE);
 					}
-				} while ((mode & 0x08) == 0 || (mode & 0x40) == 1);
+				} while ((mode & 0x08) == 0);
 				// Clear RegIrqFlags2 
 				unsigned char spibuffer[2];
 				spibuffer[0] = 0x28 | 0x80;  // address + write command
@@ -306,6 +315,15 @@ int main(int argc, char* argv[]) {
 			fprintf(stderr, "Failed to enter TX Mode\n");
 			exit(EXIT_FAILURE);
 		}
+		do
+		{
+			mode = rfm69getState();
+			if (mode < 0)
+			{
+				fprintf(stderr, "Failed to read RFM69 Status\n");
+				exit(EXIT_FAILURE);
+			}
+		} while ((mode & 0x2000) == 0);
 		// write Tx data
 		payload[0] = REMOTE_RFID;
 		for (int j = 1; j < 11; j++)
@@ -327,7 +345,7 @@ int main(int argc, char* argv[]) {
 					fprintf(stderr, "Failed to read RFM69 Status\n");
 					exit(EXIT_FAILURE);
 				}
-			} while ((mode & 0x08) == 0 || (mode & 0x40) == 1);
+			} while ((mode & 0x08) == 0);
 			// Clear RegIrqFlags2 
 			unsigned char spibuffer[2];
 			spibuffer[0] = 0x28 | 0x80;  // address + write command
