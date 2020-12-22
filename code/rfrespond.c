@@ -57,7 +57,6 @@ void myInterrupt2(void) {}
 int main(int argc, char* argv[]) {
 	pid_t pid, sid;
 	int fdspi, gpio, i, mode, nbr=1;
-	FILE* fdlog;
 	char *ap;
 	unsigned char locrfid[IDSIZE], remrfid[IDSIZE];
 
@@ -87,7 +86,7 @@ int main(int argc, char* argv[]) {
 	}
 	remrfid[IDSIZE - 1] = REMOTE_RFID;
 	gpio = atoi(config[1]);
-	fprintf(stdout, "RFID:%s, GPIO:%d\n",config[0] , gpio); 
+	fprintf(stdout, "[INFO] rfrespond start\n");
 
 	// *** Setup ***
 	if (wiringPiSetupSys() < 0) {
@@ -100,53 +99,29 @@ int main(int argc, char* argv[]) {
 		exit(EXIT_FAILURE);
 	}
 
-	// *** Daemonize ***
-	//pid = fork();
-	//if (pid < 0) exit(EXIT_FAILURE);
-	//if (pid > 0) exit(EXIT_SUCCESS);
-
-	fdlog = fopen("/var/log/radio.log", "w");
-	fprintf(fdlog, "starting <rfrespond> in daemon mode\nListening on RF ID: ");
-	fprintf(stdout, "starting <rfrespond> in daemon mode\nListening on RF ID: ");
+	fprintf(stdout, "Listening on RF ID: ");
 	for (i = 0; i < IDSIZE; i++) {
 		if(i != 0) {
-			fprintf(fdlog,":");
 			fprintf(stdout,":");
 		}
-		fprintf(fdlog, "%02x", locrfid[i]);
 		fprintf(stdout, "%02x", locrfid[i]);
 	}
-	fprintf(fdlog,"\n");
 	fprintf(stdout,"\n");
-	//sid = setsid();
-	/*if (sid < 0) {
-		fprintf(fdlog, "failed to daemonize - exiting\n");
-		fprintf(stdout, "failed to daemonize - exiting\n");
-		exit(EXIT_FAILURE);
-	}
-	*/
-	fflush(fdlog);
 	fflush(stdout);
-	//fclose(stdin);
-	//fclose(stdout);
-	//fclose(stderr);
 
 	// *** Check RFM69 Status ***
 	// get mode
 	mode = rfm69getState();
 	if (mode < 0) {
-		fprintf(fdlog, "Failed to read RFM69 Status\n");
 		fprintf(stderr, "Failed to read RFM69 Status\n");
 		exit(EXIT_FAILURE);
 	}
 
 	if ((mode & 0x02) == 0x02) {
-		fprintf(fdlog, "Received WuR while packet was sleeping\n");
 		fprintf(stdout, "Received WuR while packet was sleeping\n");
 
 		if (rfm69STDBYMode(locrfid))
 		{
-			fprintf(fdlog, "Failed to enter STDBY Mode\n");
 			fprintf(stderr, "Failed to enter STDBY Mode\n");
 			exit(EXIT_FAILURE);
 		}
@@ -155,7 +130,6 @@ int main(int argc, char* argv[]) {
 		// read remote RF ID from FIFO
 		unsigned char payload[11];
 		rfm69rxdata(payload, 11); // skip last byte of called RF ID
-		fprintf(fdlog, "Received payload: %s\n", payload);
 		fprintf(stdout, "Received payload:");
 		for (int i = 0; i < 11; i++) {
 			if(i != 0) fprintf(stdout,":");
@@ -172,25 +146,19 @@ int main(int argc, char* argv[]) {
 		}
 		if (same)
 		{
-			fprintf(fdlog,"ACKed %d. Call from Station: ",nbr);
 			fprintf(stdout,"ACKed %d. Call from Station: ",nbr++);
 			for (i = 0; i < IDSIZE; i++) {
 				if(i != 0) {
-					fprintf(fdlog,":");
 					fprintf(stdout,":");
 				}
-				fprintf(fdlog, "%02x", remrfid[i]);
 				fprintf(stdout, "%02x", remrfid[i]);
 			}
-			fprintf(fdlog,"\n");
 			fprintf(stdout,"\n");
-			fflush(fdlog);
 			fflush(stdout);
 
 			// *** Send ACK ***
 			// prepare for TX
 			if (rfm69startTxMode(remrfid)) {
-				fprintf(fdlog, "Failed to enter TX Mode\n");
 				fprintf(stderr, "Failed to enter TX Mode\n");
 				exit(EXIT_FAILURE);
 			}
@@ -212,7 +180,7 @@ int main(int argc, char* argv[]) {
 				struct timeval delay;
 				srand(time(NULL) + locrfid[IDSIZE - 1]);
 				delay.tv_sec =0;
-				delay.tv_usec = 10000 * (rand() % 400 + 1); // 10 ms ~ 1s
+				delay.tv_usec = 10000 * (rand() % 100 + 1); // 10 ms ~ 1s
 				select(0, NULL,NULL, NULL, &delay);
 				
 				rfm69txdata(payload, 11); // write complete local RF ID
@@ -220,7 +188,6 @@ int main(int argc, char* argv[]) {
 					usleep(1000);
 					mode = rfm69getState();
 					if (mode < 0) {
-						fprintf(fdlog, "Failed to read RFM69 Status\n");
 						fprintf(stderr, "Failed to read RFM69 Status\n");
 						exit(EXIT_FAILURE);
 					}
@@ -242,14 +209,12 @@ int main(int argc, char* argv[]) {
 		// switch back to STDBY Mode
 		if (rfm69STDBYMode(locrfid))
 		{
-			fprintf(fdlog, "Failed to enter STDBY Mode\n");
 			fprintf(stderr, "Failed to enter STDBY Mode\n");
 			exit(EXIT_FAILURE);
 		}
 		// *** Reception ***
 		// prepare for RX
 		if (rfm69startRxMode(locrfid)) {
-			fprintf(fdlog, "Failed to enter RX Mode\n");
 			fprintf(stderr, "Failed to enter RX Mode\n");
 			exit(EXIT_FAILURE);
 		}
@@ -259,7 +224,6 @@ int main(int argc, char* argv[]) {
 			usleep(86000);
 			mode = rfm69getState();
 			if (mode < 0) {
-				fprintf(fdlog, "Failed to read RFM69 Status\n");
 				fprintf(stderr, "Failed to read RFM69 Status\n");
 				exit(EXIT_FAILURE);
 			}
@@ -267,7 +231,6 @@ int main(int argc, char* argv[]) {
 		// switch back to STDBY Mode
 		if (rfm69STDBYMode(locrfid))
 		{
-			fprintf(fdlog, "Failed to enter STDBY Mode\n");
 			fprintf(stderr, "Failed to enter STDBY Mode\n");
 			exit(EXIT_FAILURE);
 		}
@@ -276,7 +239,6 @@ int main(int argc, char* argv[]) {
 		// read remote RF ID from FIFO
 		unsigned char payload[11];
 		rfm69rxdata(payload, 11); // skip last byte of called RF ID
-		fprintf(fdlog, "Received payload: %s\n", payload);
 		fprintf(stdout, "Received payload:");
 		for (int i = 0; i < 11; i++) {
 			if(i != 0) fprintf(stdout,":");
@@ -293,25 +255,19 @@ int main(int argc, char* argv[]) {
 		}
 		if (!same)
 			continue;
-		fprintf(fdlog,"ACKed %d. Call from Station: ",nbr);
 		fprintf(stdout,"ACKed %d. Call from Station: ",nbr++);
 		for (i = 0; i < IDSIZE; i++) {
 			if(i != 0) {
-				fprintf(fdlog,":");
 				fprintf(stdout,":");
 			}
-			fprintf(fdlog, "%02x", remrfid[i]);
 			fprintf(stdout, "%02x", remrfid[i]);
 		}
-		fprintf(fdlog,"\n");
 		fprintf(stdout,"\n");
-		fflush(fdlog);
 		fflush(stdout);
 		
 		// *** Send ACK ***
 		// prepare for TX
 		if (rfm69startTxMode(remrfid)) {
-			fprintf(fdlog, "Failed to enter TX Mode\n");
 			fprintf(stderr, "Failed to enter TX Mode\n");
 			exit(EXIT_FAILURE);
 		}
@@ -333,7 +289,7 @@ int main(int argc, char* argv[]) {
 			struct timeval delay;
 			srand(time(NULL) + locrfid[IDSIZE - 1]);
 			delay.tv_sec =0;
-			delay.tv_usec = 10000 * (rand() % 400 + 1); // 10 ms ~ 1s
+			delay.tv_usec = 10000 * (rand() % 100 + 1); // 10 ms ~ 1s
 			select(0, NULL,NULL, NULL, &delay);
 			
 			rfm69txdata(payload, 11); // write complete local RF ID
@@ -341,7 +297,6 @@ int main(int argc, char* argv[]) {
 				usleep(1000);
 				mode = rfm69getState();
 				if (mode < 0) {
-					fprintf(fdlog, "Failed to read RFM69 Status\n");
 					fprintf(stderr, "Failed to read RFM69 Status\n");
 					exit(EXIT_FAILURE);
 				}
@@ -360,7 +315,6 @@ int main(int argc, char* argv[]) {
 	// guarantee < 1% air time
 	delay(85);
 	close(fdspi);
-	fclose(fdlog);
 	fclose(stdout);
 	fclose(stderr);
 	exit(EXIT_SUCCESS);
