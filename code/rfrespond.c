@@ -175,13 +175,14 @@ int main(int argc, char* argv[]) {
 			payload[0] = REMOTE_RFID;
 			for (int j = 1; j < 11; j++)
 				payload[j] = locrfid[IDSIZE - 1];
+			srand(time(NULL) + locrfid[IDSIZE - 1]);
 			for (int k = 0; k < 5; k++)
 			{
-				struct timeval delay;
-				srand(time(NULL) + locrfid[IDSIZE - 1]);
-				delay.tv_sec =0;
-				delay.tv_usec = 10000 * (rand() % 100 + 1); // 10 ms ~ 1s
-				select(0, NULL,NULL, NULL, &delay);
+				struct timeval delayTime;
+				int temp = 10000 * (rand() % 100 + 1);
+				delayTime.tv_sec = temp / 1000000;
+				delayTime.tv_usec = temp % 1000000; // 10 ms ~ 1s
+				select(0, NULL,NULL, NULL, &delayTime);
 				
 				rfm69txdata(payload, 11); // write complete local RF ID
 				do {
@@ -234,7 +235,7 @@ int main(int argc, char* argv[]) {
 			fprintf(stderr, "Failed to enter STDBY Mode\n");
 			exit(EXIT_FAILURE);
 		}
-		delay(20);
+		usleep(20);
 
 		// read remote RF ID from FIFO
 		unsigned char payload[11];
@@ -284,13 +285,14 @@ int main(int argc, char* argv[]) {
 		payload[0] = REMOTE_RFID;
 		for (int j = 1; j < 11; j++)
 			payload[j] = locrfid[IDSIZE - 1];
+		srand(time(NULL) + locrfid[IDSIZE - 1]);
 		for (int k = 0; k < 5; k++)
 		{
-			struct timeval delay;
-			srand(time(NULL) + locrfid[IDSIZE - 1]);
-			delay.tv_sec =0;
-			delay.tv_usec = 10000 * (rand() % 100 + 1); // 10 ms ~ 1s
-			select(0, NULL,NULL, NULL, &delay);
+			struct timeval delayTime;
+			int temp = 10000 * (rand() % 100 + 1);
+			delayTime.tv_sec = temp / 1000000;
+			delayTime.tv_usec = temp % 1000000; // 10 ms ~ 1s
+			select(0, NULL,NULL, NULL, &delayTime);
 			
 			rfm69txdata(payload, 11); // write complete local RF ID
 			do {
@@ -313,7 +315,7 @@ int main(int argc, char* argv[]) {
 		}
 	}
 	// guarantee < 1% air time
-	delay(85);
+	usleep(85);
 	close(fdspi);
 	fclose(stdout);
 	fclose(stderr);
