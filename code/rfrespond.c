@@ -179,7 +179,7 @@ int main(int argc, char* argv[]) {
 			for (int k = 0; k < 5; k++)
 			{
 				struct timeval delayTime;
-				int temp = 10000 * (rand() % 100 + 1);
+				int temp = 1000 * (rand() % 1000);
 				delayTime.tv_sec = temp / 1000000;
 				delayTime.tv_usec = temp % 1000000; // 10 ms ~ 1s
 				select(0, NULL,NULL, NULL, &delayTime);
@@ -289,7 +289,7 @@ int main(int argc, char* argv[]) {
 		for (int k = 0; k < 5; k++)
 		{
 			struct timeval delayTime;
-			int temp = 10000 * (rand() % 100 + 1);
+			int temp = 1000 * (rand() % 1000);
 			delayTime.tv_sec = temp / 1000000;
 			delayTime.tv_usec = temp % 1000000; // 10 ms ~ 1s
 			select(0, NULL,NULL, NULL, &delayTime);
