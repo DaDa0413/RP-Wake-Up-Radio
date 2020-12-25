@@ -116,7 +116,6 @@ void myInterrupt0(void)
 	if (!intReg) 
 	{
 		intReg = 1;
-		write(self_pipe_fd[1], "x", 1);	
 	}
 }
 int fd;
@@ -208,185 +207,68 @@ int main(int argc, char* argv[]) {
 	}
 
 	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
-
 	int nbr = 1, gotyou = 0;
-	do {
-		for (auto it = Targetlist.begin(); it != Targetlist.end(); it++) {
-			unsigned char remrfid[IDSIZE];
-			memcpy(&remrfid, &it->remrfid, sizeof it->remrfid);
-			// ********************
-			// *** Transmission ***
-			// ********************
-			// prepare for TX
-			if (rfm69startTxMode(remrfid)) {
-				fprintf(stderr, "Failed to enter TX Mode\n");
-				exit(EXIT_FAILURE);
-			}
-
-			do
-			{
-				mode = rfm69getState();
-				if (mode < 0)
-				{
-					fprintf(stderr, "Failed to read RFM69 Status\n");
-					exit(EXIT_FAILURE);
-				}
-			} while ((mode & 0x2000) == 0);
-
-			// write Tx data
-			unsigned char payload[11];
-			for (int j = 0; j < 11; j++)
-				payload[j] = remrfid[IDSIZE-1];
-			rfm69txdata(payload, 11);
-			// Wait for TX_Sent, takes approx. 853.3 micro-second
-			do {
-				usleep(1000);
-				mode = rfm69getState();
-				if (mode < 0) {
-					fprintf(stderr, "Failed to read RFM69 Status\n");
-					exit(EXIT_FAILURE);
-				}
-			} while ((mode & 0x08) == 0);
-			fprintf(stdout, "%d. Wake-Telegram sent to %s.\n", nbr++, it->rem);
-
-			// switch back to STDBY Mode
-			if (rfm69STDBYMode(locrfid))
-			{
-				fprintf(stderr, "Failed to enter STDBY Mode\n");
-				exit(EXIT_FAILURE);
-			}
-		
-			struct timeval delay;
-			srand(time(NULL) + locrfid[IDSIZE - 1]);
-			delay.tv_sec = 0;
-			delay.tv_usec = 85;
-			select(0, NULL,NULL, NULL, &delay);
-		}
-
-		int round = 5;
-		while(round--)
-		{
-			// *** Reception ***
-			// prepare for RX
-			if (pipe(self_pipe_fd) < 0)
-			{
-				fprintf(stderr, "Fail ot open pipe\n");
-				exit(EXIT_FAILURE);
-			}
-			fd_set rfds;
-			FD_ZERO(&rfds);
-			FD_SET(self_pipe_fd[0], &rfds);
-			intReg = 0;
-			if (rfm69startRxMode(locrfid)) {
-				fprintf(stderr, "Failed to enter RX Mode\n");
-				exit(EXIT_FAILURE);
-			}
-
-			// wait for HW interrupt(s) and check for CRC_Ok state
-			struct timeval delay;
-			srand(time(NULL) + locrfid[IDSIZE - 1]);
-			delay.tv_sec = 0;
-			delay.tv_usec = 84000; // 84 ms
-			select(self_pipe_fd[0] + 1, &rfds,NULL, NULL, &delay);
-			close(self_pipe_fd[0]);
-			close(self_pipe_fd[1]);
-
-			std::vector <Target>::iterator it2;
-			if (intReg == 1) { // in case of reception ...
-				int mode = rfm69getState();
-				if (mode < 0) {
-					fprintf(stderr, "Failed to read RFM69 Status\n");
-					exit(EXIT_FAILURE);
-				}
-				if ((mode & 0x02) == 0x02) { // Check CrcOk
-					// read remote RF ID from FIFO
-					unsigned char payload[11];
-					memset(payload, 0, 11);
-					rfm69rxdata(payload, 11); 
-					fprintf(stdout, "Received payload:");
-					for (int i = 0; i < 11; i++) {
-						if(i != 0) fprintf(stdout,":");
-						fprintf(stdout, "%02x", payload[i]);
-					}
-					fprintf(stdout, "\n");
-
-					// Compare remote RFID with targetList
-					for(it2 = Targetlist.begin(); it2 != Targetlist.end(); it2++)
-					{					
-						gotyou = 1;
-						unsigned char temp = it2->remrfid[IDSIZE - 1];
-						for (int j = 1; j < 11; j++)
-							if (temp != payload[j]) 
-								gotyou = 0;
-						if (gotyou == 1)
-							break;					
-					}
-				}
-			}
-			// switch back to STDBY Mode
-			if (rfm69STDBYMode(locrfid))
-			{
-				fprintf(stderr, "Failed to enter STDBY Mode\n");
-				exit(EXIT_FAILURE);
-			}
-
-			// if not receive ACK
-			if (gotyou) {
-				// output of remote RF ID
-				fprintf(stdout, "ACK received from called Station RF ID ");
-				printrfid(it2->remrfid);
-				fprintf(stdout,"\n");
-				
-				// write into log file
-				std::fstream flog;
-				std::string name = std::string("ack_") + argv[1];
-				flog.open (LogDIR + name + ".csv", std::fstream::in | std::fstream::out | std::fstream::app);	    	
-
-				auto now = std::chrono::system_clock::now();
-				std::chrono::duration<double> elapsed_seconds = now-startTime;
-
-				flog << "\"" << it2->rem << "\"," << round << ",\"" << toTime(now) << "\",\"" 
-				<< toTime(startTime) << "\"," << elapsed_seconds.count() <<" \r\n";
-				flog.close();
-				// recover `gotyou` switch
-				gotyou = 0;
-				Targetlist.erase(it2);
-			}
-		}
-		
-	} while(!Targetlist.empty());
-
-	std::cout << "-----------------------Testing-----------------------------" << std::endl;
-
-
-	
-	while(1)
-	{
-		fd_set rfds;
-		if (pipe(self_pipe_fd) < 0)
-		{
-			fprintf(stderr, "Fail ot open pipe\n");
+	for (auto it = Targetlist.begin(); it != Targetlist.end(); it++) {
+		unsigned char remrfid[IDSIZE];
+		memcpy(&remrfid, &it->remrfid, sizeof it->remrfid);
+		// ********************
+		// *** Transmission ***
+		// ********************
+		// prepare for TX
+		if (rfm69startTxMode(remrfid)) {
+			fprintf(stderr, "Failed to enter TX Mode\n");
 			exit(EXIT_FAILURE);
 		}
-		FD_ZERO(&rfds);
-		FD_SET(self_pipe_fd[0], &rfds);
-		intReg = 0;
-		if (rfm69startRxMode(locrfid)) {
+
+		do
+		{
+			mode = rfm69getState();
+			if (mode < 0)
+			{
+				fprintf(stderr, "Failed to read RFM69 Status\n");
+				exit(EXIT_FAILURE);
+			}
+		} while ((mode & 0x2000) == 0);
+
+		// write Tx data
+		unsigned char payload[11];
+		for (int j = 0; j < 11; j++)
+			payload[j] = remrfid[IDSIZE-1];
+		rfm69txdata(payload, 11);
+		// Wait for TX_Sent, takes approx. 853.3 micro-second
+		do {
+			usleep(1000);
+			mode = rfm69getState();
+			if (mode < 0) {
+				fprintf(stderr, "Failed to read RFM69 Status\n");
+				exit(EXIT_FAILURE);
+			}
+		} while ((mode & 0x08) == 0);
+		fprintf(stdout, "%d. Wake-Telegram sent to %s.\n", nbr++, it->rem);
+
+		// switch back to STDBY Mode
+		if (rfm69STDBYMode(locrfid))
+		{
+			fprintf(stderr, "Failed to enter STDBY Mode\n");
+			exit(EXIT_FAILURE);
+		}
+	
+		struct timeval delay;
+		srand(time(NULL) + locrfid[IDSIZE - 1]);
+		delay.tv_sec = 0;
+		delay.tv_usec = 85;
+		select(0, NULL,NULL, NULL, &delay);
+	}
+
+	intReg = 0;
+	if (rfm69startRxMode(locrfid)) {
 			fprintf(stderr, "Failed to enter RX Mode\n");
 			exit(EXIT_FAILURE);
 		}
-
-		// wait for HW interrupt(s) and check for CRC_Ok state
-
-		struct timeval delay;
-		delay.tv_sec = 0;
-		delay.tv_usec = 84000; // 84 ms
-		select(self_pipe_fd[0] + 1, &rfds,NULL, NULL, &delay);
-		close(self_pipe_fd[0]);
-		close(self_pipe_fd[1]);
-
-		if(intReg)
-		{
+	// Check for CRC_Ok state
+	do {
+		std::vector <Target>::iterator it2;
+		if (intReg == 1) { // in case of reception ...
 			int mode = rfm69getState();
 			if (mode < 0) {
 				fprintf(stderr, "Failed to read RFM69 Status\n");
@@ -403,14 +285,56 @@ int main(int argc, char* argv[]) {
 					fprintf(stdout, "%02x", payload[i]);
 				}
 				fprintf(stdout, "\n");
-			}
-			if (rfm69STDBYMode(locrfid))
-			{
-				fprintf(stderr, "Failed to enter STDBY Mode\n");
-				exit(EXIT_FAILURE);
+
+				// Compare remote RFID with targetList
+				for(it2 = Targetlist.begin(); it2 != Targetlist.end(); it2++)
+				{					
+					gotyou = 1;
+					unsigned char temp = it2->remrfid[IDSIZE - 1];
+					for (int j = 1; j < 11; j++)
+						if (temp != payload[j]) 
+							gotyou = 0;
+					if (gotyou == 1)
+						break;					
+				}
+				rfm69restartRx();
+				do
+				{
+					mode = rfm69getState();
+					if (mode < 0)
+					{
+						fprintf(stderr, "Failed to read RFM69 Status\n");
+						exit(EXIT_FAILURE);
+					}
+				} while ((mode & 0x2000) == 0);
 			}
 		}
-	}
+
+		// if not receive ACK
+		if (gotyou) {
+			// output of remote RF ID
+			fprintf(stdout, "ACK received from called Station RF ID ");
+			printrfid(it2->remrfid);
+			fprintf(stdout,"\n");
+			
+			// write into log file
+			std::fstream flog;
+			std::string name = std::string("ack_") + argv[1];
+			flog.open (LogDIR + name + ".csv", std::fstream::in | std::fstream::out | std::fstream::app);	    	
+
+			auto now = std::chrono::system_clock::now();
+			std::chrono::duration<double> elapsed_seconds = now-startTime;
+
+			flog << "\"" << it2->rem << "\"," << round << ",\"" << toTime(now) << "\",\"" 
+			<< toTime(startTime) << "\"," << elapsed_seconds.count() <<" \r\n";
+			flog.close();
+			// recover `gotyou` switch
+			gotyou = 0;
+			Targetlist.erase(it2);
+		}
+		
+	} while(!Targetlist.empty());
+
 	close(fd);
 
 	exit(EXIT_SUCCESS);
