@@ -266,6 +266,7 @@ int main(int argc, char* argv[]) {
 		fprintf(stdout,"\n");
 		fflush(stdout);
 		
+		usleep(1000000);
 		// *** Send ACK ***
 		// prepare for TX
 		if (rfm69startTxMode(remrfid)) {
@@ -303,6 +304,8 @@ int main(int argc, char* argv[]) {
 					exit(EXIT_FAILURE);
 				}
 			} while ((mode & 0x08) == 0);
+			fprintf(stdout,"ACK sent\n");
+			fflush(stdout);
 			// Clear RegIrqFlags2 
 			unsigned char spibuffer[2];
 			spibuffer[0] = 0x28 | 0x80;  // address + write command
