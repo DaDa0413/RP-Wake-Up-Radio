@@ -113,10 +113,10 @@ char* toTime(std::chrono::system_clock::time_point target) {
 int intReg = 1;
 void myInterrupt0(void) 
 {
+	fprintf(stdout, "Interrupt triggered\n");
 	// if (!intReg) 
 	{
 		intReg = 1;
-		fprintf(stdout, "Interrupt triggered\n");
 		fflush(stdout);
 	}
 }
@@ -284,8 +284,8 @@ int main(int argc, char* argv[]) {
 	do {
 		std::vector <Target>::iterator it2;
 
-		// if (intReg == 1) { // in case of reception ...
-
+		// if (intReg) { // in case of reception ...
+			// intReg = 0;
 			do {
 				rfm69restartRx();
 				usleep(86000);
@@ -324,7 +324,7 @@ int main(int argc, char* argv[]) {
 					if (gotyou == 1)
 						break;					
 				}
-				rfm69restartRx();
+				// rfm69restartRx();
 				do
 				{
 					mode = rfm69getState();
