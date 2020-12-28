@@ -113,9 +113,11 @@ char* toTime(std::chrono::system_clock::time_point target) {
 int intReg = 1;
 void myInterrupt0(void) 
 {
-	if (!intReg) 
+	// if (!intReg) 
 	{
 		intReg = 1;
+		fprintf(stdout, "Interrupt triggered\n");
+		fflush(stdout);
 	}
 }
 int fd;
@@ -207,7 +209,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
-	int nbr = 1, gotyou = 0;
+	int nbr = 1;
 	for (auto it = Targetlist.begin(); it != Targetlist.end(); it++) {
 		unsigned char remrfid[IDSIZE];
 		memcpy(&remrfid, &it->remrfid, sizeof it->remrfid);
@@ -260,15 +262,40 @@ int main(int argc, char* argv[]) {
 		select(0, NULL,NULL, NULL, &delay);
 	}
 
+	// Listen ACK
+	fprintf(stdout, "Start listening ACK\n");
+	fflush(stdout);
+	int gotyou = 0;
 	intReg = 0;
 	if (rfm69startRxMode(locrfid)) {
 			fprintf(stderr, "Failed to enter RX Mode\n");
 			exit(EXIT_FAILURE);
 		}
+	do
+	{
+		mode = rfm69getState();
+		if (mode < 0)
+		{
+			fprintf(stderr, "Failed to read RFM69 Status\n");
+			exit(EXIT_FAILURE);
+		}
+	} while ((mode & 0x8000) == 0);
 	// Check for CRC_Ok state
 	do {
 		std::vector <Target>::iterator it2;
-		if (intReg == 1) { // in case of reception ...
+
+		// if (intReg == 1) { // in case of reception ...
+
+			do {
+				rfm69restartRx();
+				usleep(86000);
+				mode = rfm69getState();
+				if (mode < 0) {
+					fprintf(stderr, "Failed to read RFM69 Status\n");
+					exit(EXIT_FAILURE);
+				}
+			} while ((mode & 0x02) == 0);
+
 			int mode = rfm69getState();
 			if (mode < 0) {
 				fprintf(stderr, "Failed to read RFM69 Status\n");
@@ -306,9 +333,9 @@ int main(int argc, char* argv[]) {
 						fprintf(stderr, "Failed to read RFM69 Status\n");
 						exit(EXIT_FAILURE);
 					}
-				} while ((mode & 0x2000) == 0);
+				} while ((mode & 0x8000) == 0);
 			}
-		}
+		// }
 
 		// if not receive ACK
 		if (gotyou) {
@@ -330,7 +357,7 @@ int main(int argc, char* argv[]) {
 			flog.close();
 			// recover `gotyou` switch
 			gotyou = 0;
-			Targetlist.erase(it2);
+			// Targetlist.erase(it2);
 		}
 		
 	} while(!Targetlist.empty());
