@@ -56,7 +56,7 @@ void myInterrupt2(void) {}
 
 int main(int argc, char* argv[]) {
 	pid_t pid, sid;
-	int fdspi, gpio, i, mode, nbr=1;
+	int fdspi, gpio, i, mode, nbr=1, random_coef;
 	char *ap;
 	unsigned char locrfid[IDSIZE], remrfid[IDSIZE];
 
@@ -69,11 +69,16 @@ int main(int argc, char* argv[]) {
 	// *** Config ***
 	char config[2][30];
 	
-	if (argc != 3) readConfig("/home/pi/myConfig", config); 
-	else {
-		strcpy(config[0], argv[1]);
-		strcpy(config[1], argv[2]);
+	readConfig("/home/pi/myConfig", config); 
+	if (argc == 2)
+	{
+		random_coef = atoi(argv[1]);
 	}
+	else
+	{
+		random_coef = 1;
+	}
+	
 	
 	// Set locrfid and remoterfid
 	ap = config[0];
@@ -179,7 +184,7 @@ int main(int argc, char* argv[]) {
 			for (int k = 0; k < 5; k++)
 			{
 				struct timeval delayTime;
-				int temp = 1000 * (rand() % 1000);
+				int temp = 1000 * (rand() % 1000) * random_coef;
 				delayTime.tv_sec = temp / 1000000;
 				delayTime.tv_usec = temp % 1000000; // 10 ms ~ 1s
 				select(0, NULL,NULL, NULL, &delayTime);
@@ -290,7 +295,7 @@ int main(int argc, char* argv[]) {
 		for (int k = 0; k < 5; k++)
 		{
 			struct timeval delayTime;
-			int temp = 1000 * (rand() % 1000);
+			int temp = 1000 * (rand() % 1000)  * random_coef;
 			delayTime.tv_sec = temp / 1000000;
 			delayTime.tv_usec = temp % 1000000; // 10 ms ~ 1s
 			select(0, NULL,NULL, NULL, &delayTime);
