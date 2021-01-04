@@ -9,12 +9,12 @@ if not os.geteuid()==0:
 process = subprocess.Popen(['/usr/local/bin/rfrespond'])
 try:
     print('[INFO] rfespond: ', process.pid)
-    process.wait(timeout=15)
+    process.wait(timeout=20)
 except subprocess.TimeoutExpired:
     print('Timed out - killing rfrespond')
     process.kill()
 
-time.sleep(10)
+time.sleep(5)
 process = subprocess.Popen(['/usr/local/bin/cleanFIFO'])
 try:
     print('[INFO] cleanFIFO: ', process.pid)
