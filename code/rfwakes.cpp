@@ -263,8 +263,8 @@ int main(int argc, char* argv[]) {
 			select(0, NULL,NULL, NULL, &delay);
 		}
 
-		int round = 5;
-		while(round--)
+		int ack_times = 5;
+		while(ack_times--)
 		{
 			// *** Reception ***
 			// prepare for RX
