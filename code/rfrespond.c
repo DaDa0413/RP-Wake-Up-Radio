@@ -56,7 +56,7 @@ void myInterrupt2(void) {}
 
 int main(int argc, char* argv[]) {
 	pid_t pid, sid;
-	int fdspi, gpio, i, mode, nbr=1, random_coef;
+	int fdspi, gpio, i, mode, nbr=1, random_coef, ack_times;
 	char *ap;
 	unsigned char locrfid[IDSIZE], remrfid[IDSIZE];
 
@@ -70,13 +70,17 @@ int main(int argc, char* argv[]) {
 	char config[2][30];
 	
 	readConfig("/home/pi/myConfig", config); 
-	if (argc == 2)
+	if (argc == 3)
 	{
 		random_coef = atoi(argv[1]);
+		ack_times = atoi(argv[2]);
+		fprintf(stdout, "Now Usage: rfrespond random_coef ack_times\n");
 	}
 	else
 	{
+		fprintf(stdout, "Now Usage: rfrespond random_coef=1 ack_times=5\n");
 		random_coef = 1;
+		ack_times = 5;
 	}
 	
 	
@@ -181,7 +185,7 @@ int main(int argc, char* argv[]) {
 			for (int j = 1; j < 11; j++)
 				payload[j] = locrfid[IDSIZE - 1];
 			srand(time(NULL) + locrfid[IDSIZE - 1]);
-			for (int k = 0; k < 5; k++)
+			for (int k = 0; k < ack_times; k++)
 			{
 				struct timeval delayTime;
 				int temp = 1000 * (rand() % 1000) * random_coef;
@@ -292,7 +296,7 @@ int main(int argc, char* argv[]) {
 		for (int j = 1; j < 11; j++)
 			payload[j] = locrfid[IDSIZE - 1];
 		srand(time(NULL) + locrfid[IDSIZE - 1]);
-		for (int k = 0; k < 5; k++)
+		for (int k = 0; k < ack_times; k++)
 		{
 			struct timeval delayTime;
 			int temp = 1000 * (rand() % 1000)  * random_coef;
