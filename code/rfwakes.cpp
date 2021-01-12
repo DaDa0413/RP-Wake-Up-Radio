@@ -134,21 +134,21 @@ int main(int argc, char* argv[]) {
 	int mode;
 
 	char targetFName[256];
-	if (argc == 3)
+	if (argc == 4)
 	{  		
-		fprintf(stdout, "Now Usage: rfwakes fName round\n");
+		fprintf(stdout, "Now Usage: rfwakes fName round distance\n");
 		strcpy(targetFName, "/home/pi/targetlist");
 	}
-	else if (argc == 4)
+	else if (argc == 5)
 	{  		
-		fprintf(stdout, "Now Usage: rfwakes fName round targetFile\n");
+		fprintf(stdout, "Now Usage: rfwakes fName round distance targetFile\n");
 		strcpy(targetFName, "/home/pi/");
 		strcat(targetFName, argv[3]);
 
 	}
 	else
 	{  		
-		fprintf(stdout, "[ERROR] Usage: rfwakes fName round [targetFile]\n");
+		fprintf(stdout, "[ERROR] Usage: rfwakes fName round distance [targetFile]\n");
 		exit(EXIT_FAILURE);
 	}
 
@@ -170,9 +170,9 @@ int main(int argc, char* argv[]) {
 	}
 
 	gpio = atoi(config[1]);
-
 	fprintf(stdout, "Local RFID:%s, GPIO:%d\n",config[0] , gpio); 
 	int round = atoi(argv[2]);
+	int distance = atoi(argv[3]);
 	std::cout << "Start rfwakes at: " <<  round << ", " << toTime(std::chrono::system_clock::now()) << std::endl;
 
 
@@ -347,7 +347,7 @@ int main(int argc, char* argv[]) {
 				auto now = std::chrono::system_clock::now();
 				std::chrono::duration<double> elapsed_seconds = now-startTime;
 
-				flog << "\"" << it2->rem << "\"," << round << ",\"" << toTime(now) << "\",\"" 
+				flog << "\"" << it2->rem << "\"," << round << ","<< distance << ",\"" << toTime(now) << "\",\"" 
 				<< toTime(startTime) << "\"," << elapsed_seconds.count() <<" \r\n";
 				flog.close();
 				// recover `gotyou` switch
