@@ -26,7 +26,7 @@ for i in rfrespond rfwait rfwait2 getStatus cleanFIFO; do
 done
 
 # compile cpp code
-for i in rfwake rfwakes; do
+for i in rfwake rfwakes listening_ack; do
     echo [... installing $i];
     g++ $i.cpp rfm69bios.o -o $i -lwiringPi;
     chown root:root $i;
