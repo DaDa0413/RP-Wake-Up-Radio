@@ -275,7 +275,6 @@ int main(int argc, char* argv[]) {
 		fprintf(stdout,"\n");
 		fflush(stdout);
 		
-		usleep(1000000);
 		// *** Send ACK ***
 		// prepare for TX
 		if (rfm69startTxMode(remrfid)) {

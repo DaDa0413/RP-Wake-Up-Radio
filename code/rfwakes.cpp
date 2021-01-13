@@ -143,7 +143,7 @@ int main(int argc, char* argv[]) {
 	{  		
 		fprintf(stdout, "Now Usage: rfwakes fName round distance targetFile\n");
 		strcpy(targetFName, "/home/pi/");
-		strcat(targetFName, argv[3]);
+		strcat(targetFName, argv[4]);
 
 	}
 	else
