@@ -190,7 +190,7 @@ int main(int argc, char* argv[]) {
 				struct timeval delayTime;
 				int temp = 1000 * (rand() % 1000) * random_coef;
 				delayTime.tv_sec = temp / 1000000;
-				delayTime.tv_usec = temp % 1000000; // 10 ms ~ 1s
+				delayTime.tv_usec = temp % 1000000; // 1 ms ~ 1s
 				select(0, NULL,NULL, NULL, &delayTime);
 				
 				rfm69txdata(payload, 11); // write complete local RF ID
@@ -300,7 +300,7 @@ int main(int argc, char* argv[]) {
 			struct timeval delayTime;
 			int temp = 1000 * (rand() % 1000)  * random_coef;
 			delayTime.tv_sec = temp / 1000000;
-			delayTime.tv_usec = temp % 1000000; // 10 ms ~ 1s
+			delayTime.tv_usec = temp % 1000000; // 1 ms ~ 1s
 			select(0, NULL,NULL, NULL, &delayTime);
 			
 			rfm69txdata(payload, 11); // write complete local RF ID
@@ -323,7 +323,48 @@ int main(int argc, char* argv[]) {
 				fprintf(stderr, "Fail to clear RegIrqFlags\n");
 				exit(1);
 			}
-		}
+			// ******* 
+			// Switch back to receive mode, to check whether ACK is received by drone
+			// ******
+			if (rfm69startRxMode(locrfid)) {
+				fprintf(stderr, "Failed to enter RX Mode\n");
+				exit(EXIT_FAILURE);
+			}
+			// Check for CRC_Ok state
+			int count = 10;
+			do {
+				rfm69restartRx();
+				usleep(86000);
+				mode = rfm69getState();
+				if (mode < 0) {
+					fprintf(stderr, "Failed to read RFM69 Status\n");
+					exit(EXIT_FAILURE);
+				}
+			} while (count-- && (mode & 0x02) == 0);
+			
+			if (rfm69STDBYMode(locrfid))
+			{
+				fprintf(stderr, "Failed to enter STDBY Mode\n");
+				exit(EXIT_FAILURE);
+			}
+			if (count == 0)
+				continue;
+			usleep(20);
+
+			// read remote RF ID from FIFO
+			unsigned char payload[11];
+			rfm69rxdata(payload, 11); // skip last byte of called RF ID
+			int same = 1;
+			for (int i = 0; i < 11; i++) {
+				if (payload[i] != locrfid[IDSIZE - 1])
+				{
+					same = 0;
+					break;
+				}
+			}
+			if (same)
+				break;
+			}
 	}
 	// guarantee < 1% air time
 	usleep(85);
