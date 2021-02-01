@@ -211,12 +211,12 @@ int main(int argc, char* argv[]) {
 
 	int nbr = 1, gotyou = 0;
 	do {
+		// **********************
+		// *** Wake Up target ***
+		// **********************
 		for (auto it = Targetlist.begin(); it != Targetlist.end(); it++) {
 			unsigned char remrfid[IDSIZE];
 			memcpy(&remrfid, &it->remrfid, sizeof it->remrfid);
-			// ********************
-			// *** Transmission ***
-			// ********************
 			// prepare for TX
 			if (rfm69startTxMode(remrfid)) {
 				fprintf(stderr, "Failed to enter TX Mode\n");
@@ -257,14 +257,13 @@ int main(int argc, char* argv[]) {
 			}
 		
 			struct timeval delay;
-			srand(time(NULL) + locrfid[IDSIZE - 1]);
 			delay.tv_sec = 0;
-			delay.tv_usec = 85;
+			delay.tv_usec = 85;		// air time 
 			select(0, NULL,NULL, NULL, &delay);
 		}
 
-		int ack_times = 5;
-		while(ack_times--)
+		int listening_time = 5;
+		while (listening_time--)
 		{
 			// *** Reception ***
 			// prepare for RX
@@ -282,18 +281,14 @@ int main(int argc, char* argv[]) {
 				exit(EXIT_FAILURE);
 			}
 
-			// wait for HW interrupt(s) and check for CRC_Ok state
-			std::vector <Target>::iterator it2;
-
 			struct timeval delay;
-			srand(time(NULL) + locrfid[IDSIZE - 1]);
 			delay.tv_sec = 0;
-			delay.tv_usec = 84000; // 84 ms
+			delay.tv_usec = 80000; // 80 ms = 100 * 80 us (time for a packet)
 			select(self_pipe_fd[0] + 1, &rfds,NULL, NULL, &delay);
 			close(self_pipe_fd[0]);
 			close(self_pipe_fd[1]);
 
-
+			std::vector<Target>::iterator it2;
 			if (intReg == 1) { // in case of reception ...
 				int mode = rfm69getState();
 				if (mode < 0) {
@@ -332,7 +327,7 @@ int main(int argc, char* argv[]) {
 				exit(EXIT_FAILURE);
 			}
 
-			// if not receive ACK
+			// if receiving ACK
 			if (gotyou) {
 				// output of remote RF ID
 				fprintf(stdout, "ACK received from called Station RF ID ");
