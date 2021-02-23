@@ -2,9 +2,23 @@ import os, sys
 import time
 import subprocess
 
+print("[INFO] shutdown.py start") 
 # This program must be run as root
 if not os.geteuid()==0:
     sys.exit("Hint: call me as root")
+
+try:
+    process = subprocess.Popen(['date'])
+    process.wait(timeout=2)
+except: 
+    print("[ERROR] Can't not print date")
+
+try:
+    process = subprocess.Popen(['getStatus'])
+    process.wait(timeout=2)
+except: 
+    print("[ERROR] Can't not getStatus")
+
 
 process = subprocess.Popen(['/usr/local/bin/rfrespond'])
 try:
@@ -32,7 +46,7 @@ except subprocess.CalledProcessError as e:
     process.kill()
 
 print("Bye!\n")
-
+print("------------------------------------------------\n")
 cmd = "/sbin/shutdown now"
 os.system(cmd)
 
