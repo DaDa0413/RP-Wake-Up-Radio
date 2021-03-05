@@ -161,6 +161,7 @@ int main(int argc, char* argv[]) {
 	int gpio;
 	unsigned char locrfid[IDSIZE], recrfid[IDSIZE];
 
+	// Read local rfid and gpio
 	{
 		int i;
 		char *ap;
@@ -168,12 +169,26 @@ int main(int argc, char* argv[]) {
 			locrfid[i] = strtoul(ap,&ap,16);
 		}
 	}
-
 	gpio = atoi(config[1]);
 	fprintf(stdout, "Local RFID:%s, GPIO:%d\n",config[0] , gpio); 
+
 	int round = atoi(argv[2]);
 	int distance = atoi(argv[3]);
-	std::cout << "Start rfwakes at: " <<  round << ", " << toTime(std::chrono::system_clock::now()) << std::endl;
+	std::cout << "Ouput Format: remote_RFID, round, distance, ACK_time, wake_time, elapsed_time" << std::endl;
+	std::cout << "Start rfwakes at: Round " <<  round << ", " << toTime(std::chrono::system_clock::now()) << std::endl;
+
+	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
+
+	// Ouput wake-up time and wake-up target to file
+	{
+		std::fstream flog;
+		std::string name = std::string("wake_") + argv[1];
+		flog.open(LogDIR + name + ".csv", std::fstream::in | std::fstream::out | std::fstream::app);
+
+		flog << round << "," << distance << ",\"" << argc == 5 ? argv[4] : "targetlist"
+			<< "\",\"" << toTime(startTime) << "\"\r\n";
+		flog.close();
+	}
 
 
 	int counter = 0;
@@ -206,8 +221,6 @@ int main(int argc, char* argv[]) {
 		fprintf(stdout, "Failed to set gpio to wiringPiISR\n");
 		exit(EXIT_FAILURE);
 	}
-
-	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
 
 	int nbr = 1, gotyou = 0;
 	do {
