@@ -185,7 +185,7 @@ int main(int argc, char* argv[]) {
 		std::string name = std::string("wake_") + argv[1];
 		flog.open(LogDIR + name + ".csv", std::fstream::in | std::fstream::out | std::fstream::app);
 
-		flog << round << "," << distance << ",\"" << argc == 5 ? argv[4] : "targetlist"
+		flog << round << "," << distance << ",\"" << (argc == 5 ? argv[4] : "targetlist")
 			<< "\",\"" << toTime(startTime) << "\"\r\n";
 		flog.close();
 	}
