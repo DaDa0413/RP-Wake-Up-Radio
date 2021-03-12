@@ -23,12 +23,12 @@ except:
 process = subprocess.Popen(['/usr/local/bin/rfrespond'])
 try:
     print('[INFO] rfespond: ', process.pid)
-    process.wait(timeout=50)
+    process.wait(timeout=25)
 except subprocess.TimeoutExpired:
     print('Timed out - killing rfrespond')
     process.kill()
 
-time.sleep(5)
+# time.sleep(5)
 process = subprocess.Popen(['/usr/local/bin/cleanFIFO'])
 try:
     print('[INFO] cleanFIFO: ', process.pid)
@@ -44,6 +44,8 @@ try:
 except subprocess.CalledProcessError as e:
     print("Rfwait Unexpected error:", e.output)
     process.kill()
+
+time.sleep(1);
 
 print("Bye!\n")
 print("------------------------------------------------\n")
