@@ -26,8 +26,7 @@
 #endif
 
 #define LogDIR "/home/pi/Desktop/log/"
-#define roundDIR "/home/pi/Desktop/log/round"
-#define startPATH "/home/pi/Desktop/log/startWakeTime.csv"
+
 
 int self_pipe_fd[2];
 struct Target {
@@ -137,12 +136,12 @@ int main(int argc, char* argv[]) {
 	if (argc == 4)
 	{  		
 		fprintf(stdout, "Now Usage: rfwakes fName round distance\n");
-		strcpy(targetFName, "/home/pi/targetlist");
+		strcpy(targetFName, "/home/pi/target/targetlist");
 	}
 	else if (argc == 5)
 	{  		
 		fprintf(stdout, "Now Usage: rfwakes fName round distance targetFile\n");
-		strcpy(targetFName, "/home/pi/");
+		strcpy(targetFName, "/home/pi/target/");
 		strcat(targetFName, argv[4]);
 
 	}
