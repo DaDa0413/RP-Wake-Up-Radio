@@ -21,92 +21,25 @@
 #include <ctime>
 
 
-#ifndef RFM69BIOS_H
+// C++ Lib
+#include <sstream>
+#include <ctime>
+#include <iomanip>
+#include <string>
+
 #include "rfm69bios.h"
-#endif
+#include "mytime.h"
+#include "setConfig.h"
 
 #define LogDIR "/home/pi/Desktop/log/"
 
-
 int self_pipe_fd[2];
-struct Target {
-	char rem[30];	
-	unsigned char remrfid[IDSIZE];
-};
-
-void readConfig(char const *fileName, char clist[2][30])
-{
-	FILE *file = fopen(fileName, "r");
-	int c;
-
-	if (file == NULL) {
-		fprintf(stderr, "Config file cannot find in /home/pi/myConfig.");
-		fprintf(stderr, "Usage: rfwake [calledRFID] opt.[localRFID] [GPIO]\n");
-		exit(EXIT_FAILURE);
-	} //could not open file
-
-	char item[30] = {};
-
-	size_t n = 0;
-	while ((c = fgetc(file)) != EOF)
-	{
-		if (c == ' ') {
-			item[n] = '\0';
-			strcpy(clist[0], item);
-			memset(&item[0], 0, sizeof(item));
-			n = 0;
-		}
-		else
-			item[n++] = (char) c;
-	}
-
-	// terminate with the null character
-	item[n] = '\0';
-	strcpy(clist[1], item); 
-	fclose(file);
-}
-
-std::vector <Target> readTargets(char* targetFName){
-	FILE *file = fopen(targetFName, "r");
-	std::vector <Target> tlist;
-	char item[30] = {};
-	int c;
-	size_t n = 0;
-	while ((c = fgetc(file)) != EOF)
-	{
-		if (c == '\n') {
-			item[n] = '\0';
-			//fprintf(stdout, "%s\n", item);
-			Target t;
-			strcpy(t.rem, item);
-			tlist.push_back(t);
-			memset(&item[0], 0, sizeof(item));
-			n = 0;
-		}
-		else
-			item[n++] = (char) c;
-	}
-	fclose(file);
-	return tlist;
-	//fprintf(stdout, "%s\n", tt);
-}
 
 void printrfid(unsigned char rfid[]) {
 	for (int i = 0; i < IDSIZE; i++) {
 		if(i != 0) fprintf(stdout,":");
 		fprintf(stdout, "%02x", rfid[i]);
 	}
-}
-
-char* toTime(std::chrono::system_clock::time_point target) {
-	time_t temp = std::chrono::system_clock::to_time_t(target);
-	char* result = ctime(&temp);
-	for (char *ptr = result; *ptr != '\0'; ptr++)
-	{
-		if (*ptr == '\n' || *ptr == '\r')
-			*ptr = '\0';
-	}
-	return result;
 }
 
 int intReg = 1;
@@ -246,10 +179,13 @@ int main(int argc, char* argv[]) {
 			} while ((mode & 0x2000) == 0);
 
 			// write Tx data
-			unsigned char payload[11];
-			for (int j = 0; j < 11; j++)
+			unsigned char payload[PAYLOADLENGTH];
+			for (int j = 0; j < IDLENGTH; j++)
 				payload[j] = remrfid[IDSIZE-1];
-			rfm69txdata(payload, 11);
+
+			memcpy((void *)(&(payload[IDLENGTH])), timePointToChar(startTime), PAYLOADLENGTH - IDLENGTH);
+
+			rfm69txdata(payload, PAYLOADLENGTH);
 			// Wait for TX_Sent, takes approx. 853.3 micro-second
 			do {
 				usleep(1000);
@@ -293,6 +229,7 @@ int main(int argc, char* argv[]) {
 				exit(EXIT_FAILURE);
 			}
 
+			// When it is interrupted by rfm, write something to self_pipe to stop sleeping
 			struct timeval delay;
 			delay.tv_sec = 0;
 			delay.tv_usec = 80000; // 80 ms = 100 * 80 us (time for a packet)
@@ -309,11 +246,11 @@ int main(int argc, char* argv[]) {
 				}
 				if ((mode & 0x02) == 0x02) { // Check CrcOk
 					// read remote RF ID from FIFO
-					unsigned char payload[11];
-					memset(payload, 0, 11);
-					rfm69rxdata(payload, 11); 
+					unsigned char payload[PAYLOADLENGTH];
+					memset(payload, 0, PAYLOADLENGTH);
+					rfm69rxdata(payload, PAYLOADLENGTH); 
 					fprintf(stdout, "Received payload:");
-					for (int i = 0; i < 11; i++) {
+					for (int i = 0; i < IDLENGTH; i++) {
 						if(i != 0) fprintf(stdout,":");
 						fprintf(stdout, "%02x", payload[i]);
 					}
@@ -324,7 +261,7 @@ int main(int argc, char* argv[]) {
 					{					
 						gotyou = 1;
 						unsigned char temp = it2->remrfid[IDSIZE - 1];
-						for (int j = 1; j < 11; j++)
+						for (int j = 1; j < IDLENGTH; j++)
 							if (temp != payload[j]) 
 								gotyou = 0;
 						if (gotyou == 1)

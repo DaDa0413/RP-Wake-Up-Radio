@@ -12,12 +12,18 @@ of the License, or (at your option) any later version.
 #include <unistd.h>
 #include <string.h>
 #include <time.h>
+#include <sys/time.h>
+// C++ Lib
+#include <sstream>
+#include <ctime>
+#include <iomanip>
+#include <iostream>
 
-#ifndef RFM69BIOS_H
 #include "rfm69bios.h"
-#endif
-#define REMOTE_RFID 0x06
-#define MSG_LENGTH 11
+#include "setConfig.h"
+
+// #define REMOTE_RFID 0x06
+// #define PAYLOADLENGTH 20
 void readConfig(char const *fileName, char clist[2][30]);
 int checkReceivedPayload();
 void ackMsg();
@@ -156,53 +162,49 @@ int main(int argc, char* argv[]) {
 	exit(EXIT_SUCCESS);
 }
 
-void readConfig(char const *fileName, char clist[2][30])
-{
-    FILE *file = fopen(fileName, "r");
-    int c;
-
-    if (file == NULL) {
-			fprintf(stderr, "Config file cannot find in /home/pi/myConfig.");
-			fprintf(stderr, "Usage: rfrespond opt.[localRFID] [GPIO]\n");
-			exit(EXIT_FAILURE);
-	} //could not open file
-
-    char item[30] = {};
-	
-	size_t n = 0;
-    while ((c = fgetc(file)) != EOF)
-    {
-		if (c == ' ') {
-			item[n] = '\0';
-			strcpy(clist[0], item);
-			memset(&item[0], 0, sizeof(item));
-			n = 0;
-		}
-		else
-			item[n++] = (char) c;
-    }
-
-    // terminate with the null character
-    item[n] = '\0';
-    strcpy(clist[1], item); 
-}
 
 int checkReceivedPayload()
 {
 	// read remote RF ID from FIFO
-	unsigned char payload[MSG_LENGTH];
-	rfm69rxdata(payload, MSG_LENGTH); // skip last byte of called RF ID
+	unsigned char payload[PAYLOADLENGTH];
+	memset(payload, 0, PAYLOADLENGTH);
+	rfm69rxdata(payload, PAYLOADLENGTH); // skip last byte of called RF ID
 	fprintf(stdout, "Received payload:");
-	for (int i = 0; i < MSG_LENGTH; i++) {
-		if(i != 0) fprintf(stdout,":");
-		fprintf(stdout, "%02x", payload[i]);
-	}
+	for (int j = 0; j < IDLENGTH; j++)
+		printf("%02x:", payload[j]);
+	for (int j = IDLENGTH; j < PAYLOADLENGTH; j++)
+		printf("%c", payload[j]);
+	printf(".\n");
+
 	fprintf(stdout, "\n");
-	for (int i = 0; i < MSG_LENGTH; i++) {
+	for (int i = 1; i < IDLENGTH; i++)
+	{
 		if (payload[i] != locrfid[IDSIZE - 1])
 			return 0;
-		
 	}
+
+	char temp[PAYLOADLENGTH - IDLENGTH + 1];
+	memcpy(temp, &(payload[IDLENGTH]), PAYLOADLENGTH - IDLENGTH);
+	temp[PAYLOADLENGTH - IDLENGTH] = '\0';
+	std::tm tm = {};
+	if (!strptime(temp, "%a %b %d %H:%M:%S %Y", &tm))
+	{
+		printf("[ERROR] Parse Error\n");
+		exit(EXIT_FAILURE);
+	}
+	time_t t;
+	if ((t = mktime(&tm)) == -1)
+	{
+		printf("[ERROR] Mktime can not translate tm.");
+		exit(EXIT_FAILURE);
+	}
+	struct timeval tv = {t, 0};
+	if (settimeofday(&tv, (struct timezone *)0) < 0)
+	{
+		printf("[ERROR] Set system datetime error!\n");
+		exit(EXIT_FAILURE);
+	}
+
 	return 1;
 }
 
@@ -257,14 +259,14 @@ void txAndModeReady()
 
 void sendACK()
 {
-	unsigned char payload[MSG_LENGTH];
+	unsigned char payload[PAYLOADLENGTH];
 	srand(time(NULL) + locrfid[IDSIZE - 1]);
 	for (int k = 0; k < ack_times; k++)
 	{
 		txAndModeReady();
 		// Prepare Tx data
 		payload[0] = REMOTE_RFID;
-		for (int j = 1; j < MSG_LENGTH; j++)
+		for (int j = 1; j < PAYLOADLENGTH; j++)
 			payload[j] = locrfid[IDSIZE - 1];	
 		// Random delay
 		struct timeval delayTime;
@@ -274,7 +276,7 @@ void sendACK()
 		select(0, NULL,NULL, NULL, &delayTime);
 		
 		// Write payload to FIFO
-		rfm69txdata(payload, MSG_LENGTH); // write complete local RF ID
+		rfm69txdata(payload, PAYLOADLENGTH); // write complete local RF ID
 		do {
 			usleep(1000);
 			mode = rfm69getState();

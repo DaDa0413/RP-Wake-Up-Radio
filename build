@@ -17,7 +17,7 @@ echo [... building $i]
 g++ -c $i.c -lWiringPi
 
 # compile c code
-for i in rfrespond rfwait rfwait2 getStatus cleanFIFO testMode readReg; do
+for i in rfwait rfwait2 getStatus cleanFIFO testMode readReg; do
     echo [... installing $i];
     g++ $i.c rfm69bios.o -o $i -lwiringPi;
     chown root:root $i;
@@ -26,7 +26,7 @@ for i in rfrespond rfwait rfwait2 getStatus cleanFIFO testMode readReg; do
 done
 
 # compile cpp code
-for i in rfwakes; do
+for i in rfwakes rfrespond; do
     echo [... installing $i];
     g++ $i.cpp rfm69bios.o -o $i -lwiringPi;
     chown root:root $i;
