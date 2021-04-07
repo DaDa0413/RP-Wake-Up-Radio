@@ -48,6 +48,7 @@ void readConfig(char const *fileName, char clist[2][30])
 void myInterrupt(void) {}
 
 int main(int argc, char* argv[]) {
+   fprintf(stdout, "[DEBUG] Set listen mode\n");
    int fd, gpio, i;
    char *ap;
    unsigned char rfid[IDSIZE];
@@ -70,18 +71,18 @@ int main(int argc, char* argv[]) {
 		rfid[i] = strtoul(ap,&ap,16);
 	}
 	gpio = atoi(config[1]);
-	fprintf(stdout, "RFID:%s, GPIO:%d\n",config[0] , gpio); 
-
+	// fprintf(stdout, "RFID:%s, GPIO:%d\n",config[0] , gpio); 
+   fprintf(stdout, "[Debug] RFID:%s, GPIO:%d\n",config[0] , gpio); 
    // ****************************************************
    // Initiate the RPi and SPI
    // ****************************************************
    if (wiringPiSetupSys() < 0) {
-      fprintf(stderr, "Failed to setup wiringPi\n");
+      fprintf(stderr, "[ERROR] Fail to setup wiringPi\n");
       exit(EXIT_FAILURE);
    }
    fd = wiringPiSPISetup(SPI_DEVICE, SPI_SPEED);
    if (fd < 0) {
-      fprintf(stderr, "Failed to open SPI device\n");
+      fprintf(stderr, "[ERROR] Fail to open SPI device\n");
       exit(EXIT_FAILURE);
    }
    // ****************************************************
@@ -89,12 +90,12 @@ int main(int argc, char* argv[]) {
    // ****************************************************
    if (wiringPiISR(gpio, INT_EDGE_RISING, &myInterrupt) < 0)
    {
-      fprintf(stderr, "Failed to wait on HW interrupt\n");
+      fprintf(stderr, "[ERROR] Fail to wait on HW interrupt\n");
       exit(EXIT_FAILURE);
    }
 
    if (rfm69ListenMode(rfid)) {
-   	fprintf(stderr, "Failed to enter Listen Mode\n");
+   	fprintf(stderr, "[ERROR] Fail to enter Listen Mode\n");
 	   exit(EXIT_FAILURE);
    }
 

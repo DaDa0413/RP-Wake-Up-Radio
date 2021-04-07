@@ -65,7 +65,7 @@ int main(int argc, char* argv[]) {
 		rfid[i] = strtoul(ap,&ap,16);
 	}
 	gpio = atoi(config[1]);
-	fprintf(stdout, "RFID:%s, GPIO:%d...\n",config[0] , gpio); 
+	fprintf(stdout, "[INFO] RFID:%s, GPIO:%d...\n",config[0] , gpio); 
 
 	// *** Setip ***
 	if (wiringPiSetupSys() < 0) {
@@ -85,7 +85,7 @@ int main(int argc, char* argv[]) {
 		fprintf(stderr, "Failed to read RFM69 Status\n");
 		exit(EXIT_FAILURE);
 	}
-	printf("mode\t:%08X\n", mode);
+	printf("[INFO] mode: %08X\n", mode);
 
 	// get All State
 	if (rfm69getAllState() < 0) {

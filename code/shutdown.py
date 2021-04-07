@@ -2,16 +2,9 @@ import os, sys
 import time
 import subprocess
 
-print("[INFO] shutdown.py start") 
 # This program must be run as root
 if not os.geteuid()==0:
     sys.exit("Hint: call me as root")
-
-try:
-    process = subprocess.Popen(['date'])
-    process.wait(timeout=2)
-except: 
-    print("[ERROR] Can't not print date")
 
 try:
     process = subprocess.Popen(['getStatus'])
@@ -28,7 +21,12 @@ except subprocess.TimeoutExpired:
     print('Timed out - killing rfrespond')
     process.kill()
 
-# time.sleep(5)
+try:
+    process = subprocess.Popen(['date'])
+    process.wait(timeout=2)
+except: 
+    print("[ERROR] Can't not print date")
+
 process = subprocess.Popen(['/usr/local/bin/cleanFIFO'])
 try:
     print('[INFO] cleanFIFO: ', process.pid)
@@ -45,10 +43,9 @@ except subprocess.CalledProcessError as e:
     print("Rfwait Unexpected error:", e.output)
     process.kill()
 
-time.sleep(1);
+time.sleep(1)
 
-print("Bye!\n")
-print("------------------------------------------------\n")
+os.system("echo '======================================================================\n'")
 cmd = "/sbin/shutdown now"
 os.system(cmd)
 

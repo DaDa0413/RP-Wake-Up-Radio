@@ -35,13 +35,16 @@ int fdspi, gpio, mode, nbr=1, random_coef, ack_times;
 unsigned char locrfid[IDSIZE], remrfid[IDSIZE];
 
 int main(int argc, char* argv[]) {
+	fprintf(stdout, "[DEBUG] rfrespond start\n");
+
 	// *******
 	// Check root
 	// ******
 	if(geteuid() != 0) {
-		fprintf(stderr, "Hint: call me as root!\n");
+		fprintf(stdout, "Hint: call me as root!\n");
 		exit(EXIT_FAILURE);
 	}
+
 
 	// *** Config ***
 	char config[2][30];
@@ -51,11 +54,11 @@ int main(int argc, char* argv[]) {
 	{
 		random_coef = atoi(argv[1]);
 		ack_times = atoi(argv[2]);
-		fprintf(stdout, "Now Usage: rfrespond random_coef ack_times\n");
+		fprintf(stdout, "[Debug] Now Usage: rfrespond random_coef ack_times\n");
 	}
 	else
 	{
-		fprintf(stdout, "Now Usage: rfrespond random_coef=1 ack_times=5\n");
+		fprintf(stdout, "[Debug] Now Usage: rfrespond random_coef=1 ack_times=5\n");
 		random_coef = 1;
 		ack_times = 5;
 	}
@@ -76,43 +79,42 @@ int main(int argc, char* argv[]) {
 		remrfid[IDSIZE - 1] = REMOTE_RFID;
 		gpio = atoi(config[1]);
 	}
-	fprintf(stdout, "[INFO] rfrespond start\n");
 
 	// *** Setup ***
 	if (wiringPiSetupSys() < 0) {
-		fprintf(stderr, "Failed to setup wiringPi\n");
+		fprintf(stdout, "[ERROR] Fail to setup wiringPi\n");
 		exit(EXIT_FAILURE);
 	}
 	fdspi = wiringPiSPISetup(SPI_DEVICE, SPI_SPEED);
 	if (fdspi < 0) {
-		fprintf(stderr, "Failed to open SPI device\n");
+		fprintf(stdout, "[ERROR] Fail to open SPI device\n");
 		exit(EXIT_FAILURE);
 	}
 
-	fprintf(stdout, "Listening with RFID: ");
-	for (int i = 0; i < IDSIZE; i++) {
-		if(i != 0) {
-			fprintf(stdout,":");
-		}
-		fprintf(stdout, "%02x", locrfid[i]);
-	}
-	fprintf(stdout,"\n");
-	fflush(stdout);
+	// fprintf(stdout, "Listening with RFID: ");
+	// for (int i = 0; i < IDSIZE; i++) {
+	// 	if(i != 0) {
+	// 		fprintf(stdout,":");
+	// 	}
+	// 	fprintf(stdout, "%02x", locrfid[i]);
+	// }
+	// fprintf(stdout,"\n");
+	// fflush(stdout);
 
 	// *** Check RFM69 Status ***
 	// get mode
 	mode = rfm69getState();
 	if (mode < 0) {
-		fprintf(stderr, "Failed to read RFM69 Status\n");
+		fprintf(stdout, "[ERROR] Fail to read RFM69 Status\n");
 		exit(EXIT_FAILURE);
 	}
 
 	if ((mode & 0x02) == 0x02) {
-		fprintf(stdout, "Received WuR while packet was sleeping\n");
+		fprintf(stdout, "[DEBUG] Received WuR while RPi was sleeping\n");
 
 		if (rfm69STDBYMode(locrfid))
 		{
-			fprintf(stderr, "Failed to enter STDBY Mode\n");
+			fprintf(stdout, "[ERROR] Fail to enter STDBY Mode\n");
 			exit(EXIT_FAILURE);
 		}
 		usleep(20);
@@ -130,7 +132,7 @@ int main(int argc, char* argv[]) {
 	while(1) {
 		if (rfm69STDBYMode(locrfid))
 		{
-			fprintf(stderr, "Failed to enter STDBY Mode\n");
+			fprintf(stdout, "[ERROR] Fail to enter STDBY Mode\n");
 			exit(EXIT_FAILURE);
 		}
 		usleep(20);
@@ -140,7 +142,7 @@ int main(int argc, char* argv[]) {
 
 		if (rfm69STDBYMode(locrfid))
 		{
-			fprintf(stderr, "Failed to enter STDBY Mode\n");
+			fprintf(stdout, "[ERROR] Fail to enter STDBY Mode\n");
 			exit(EXIT_FAILURE);
 		}
 		usleep(20);
@@ -158,7 +160,6 @@ int main(int argc, char* argv[]) {
 	usleep(85);
 	close(fdspi);
 	fclose(stdout);
-	fclose(stderr);
 	exit(EXIT_SUCCESS);
 }
 
@@ -169,7 +170,7 @@ int checkReceivedPayload()
 	unsigned char payload[PAYLOADLENGTH];
 	memset(payload, 0, PAYLOADLENGTH);
 	rfm69rxdata(payload, PAYLOADLENGTH); // skip last byte of called RF ID
-	fprintf(stdout, "Received payload:");
+	fprintf(stdout, "[INFO] Received payload:");
 	for (int j = 0; j < IDLENGTH; j++)
 		printf("%02x:", payload[j]);
 	for (int j = IDLENGTH; j < PAYLOADLENGTH; j++)
@@ -205,12 +206,16 @@ int checkReceivedPayload()
 		exit(EXIT_FAILURE);
 	}
 
+	FILE *fptr = fopen("/home/pi/wakedRecord.csv","a");
+	fprintf(fptr,"%s\n", temp);
+	fclose(fptr);
+
 	return 1;
 }
 
 void ackMsg()
 {
-	fprintf(stdout,"ACKed %d. Call from Station: ",nbr++);
+	fprintf(stdout,"[INFO] ACKed %d. Call from Station: ",nbr++);
 	for (int i = 0; i < IDSIZE; i++) {
 		if(i != 0) {
 			fprintf(stdout,":");
@@ -225,7 +230,7 @@ void rxAndResetLoop()
 {
 	// prepare for RX
 	if (rfm69startRxMode(locrfid)) {
-		fprintf(stderr, "Failed to enter RX Mode\n");
+		fprintf(stdout, "[ERROR] Fail to enter RX Mode\n");
 		exit(EXIT_FAILURE);
 	}
 	// Check for CRC_Ok state
@@ -234,7 +239,7 @@ void rxAndResetLoop()
 		usleep(86000);
 		mode = rfm69getState();
 		if (mode < 0) {
-			fprintf(stderr, "Failed to read RFM69 Status\n");
+			fprintf(stdout, "[ERROR] Fail to read RFM69 Status\n");
 			exit(EXIT_FAILURE);
 		}
 	} while ((mode & 0x02) == 0);
@@ -243,7 +248,7 @@ void rxAndResetLoop()
 void txAndModeReady()
 {
 	if (rfm69startTxMode(remrfid)) {
-		fprintf(stderr, "Failed to enter TX Mode\n");
+		fprintf(stdout, "[ERROR] Fail to enter TX Mode\n");
 		exit(EXIT_FAILURE);
 	}
 	do
@@ -251,7 +256,7 @@ void txAndModeReady()
 		mode = rfm69getState();
 		if (mode < 0)
 		{
-			fprintf(stderr, "Failed to read RFM69 Status\n");
+			fprintf(stdout, "[ERROR] Fail to read RFM69 Status\n");
 			exit(EXIT_FAILURE);
 		}
 	} while ((mode & 0x2000) == 0);
@@ -281,11 +286,11 @@ void sendACK()
 			usleep(1000);
 			mode = rfm69getState();
 			if (mode < 0) {
-				fprintf(stderr, "Failed to read RFM69 Status\n");
+				fprintf(stdout, "[ERROR] Fail to read RFM69 Status\n");
 				exit(EXIT_FAILURE);
 			}
 		} while ((mode & 0x08) == 0);
-		fprintf(stdout,"ACK sent\n");
+		fprintf(stdout,"[Debug] ACK sent\n");
 		fflush(stdout);
 
 		// ******* 
@@ -293,11 +298,11 @@ void sendACK()
 		// ******
 		if (rfm69STDBYMode(locrfid))
 		{
-			fprintf(stderr, "Failed to enter STDBY Mode\n");
+			fprintf(stdout, "[ERROR] Fail to enter STDBY Mode\n");
 			exit(EXIT_FAILURE);
 		}
 		if (rfm69startRxMode(locrfid)) {
-			fprintf(stderr, "Failed to enter RX Mode\n");
+			fprintf(stdout, "[ERROR] Fail to enter RX Mode\n");
 			exit(EXIT_FAILURE);
 		}
 		// Check for CRC_Ok state
@@ -307,14 +312,14 @@ void sendACK()
 			usleep(86000);
 			mode = rfm69getState();
 			if (mode < 0) {
-				fprintf(stderr, "Failed to read RFM69 Status\n");
+				fprintf(stdout, "[ERROR] Fail to read RFM69 Status\n");
 				exit(EXIT_FAILURE);
 			}
 		} while (count-- && (mode & 0x02) == 0);
 		
 		if (rfm69STDBYMode(locrfid))
 		{
-			fprintf(stderr, "Failed to enter STDBY Mode\n");
+			fprintf(stdout, "[ERROR] Fail to enter STDBY Mode\n");
 			exit(EXIT_FAILURE);
 		}
 		usleep(20);
