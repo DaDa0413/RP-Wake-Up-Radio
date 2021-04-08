@@ -21,12 +21,6 @@ except subprocess.TimeoutExpired:
     print('Timed out - killing rfrespond')
     process.kill()
 
-try:
-    process = subprocess.Popen(['date'])
-    process.wait(timeout=2)
-except: 
-    print("[ERROR] Can't not print date")
-
 process = subprocess.Popen(['/usr/local/bin/cleanFIFO'])
 try:
     print('[INFO] cleanFIFO: ', process.pid)
@@ -43,6 +37,9 @@ except subprocess.CalledProcessError as e:
     print("Rfwait Unexpected error:", e.output)
     process.kill()
 
+
+os.system("vcgencmd measure_temp")
+os.system("vcgencmd get_throttled")
 time.sleep(1)
 
 os.system("echo '======================================================================\n'")
