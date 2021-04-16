@@ -33,6 +33,7 @@ void sendACK();
 
 int fdspi, gpio, mode, nbr=1, random_coef, ack_times;
 unsigned char locrfid[IDSIZE], remrfid[IDSIZE];
+time_t lastWuPTime = 0;
 
 int main(int argc, char* argv[]) {
 	fprintf(stdout, "[DEBUG] rfrespond start\n");
@@ -184,6 +185,9 @@ int checkReceivedPayload()
 			return 0;
 	}
 
+	// **************************************
+	// Retrieve time string & set system time
+	// **************************************
 	char temp[PAYLOADLENGTH - IDLENGTH + 1];
 	memcpy(temp, &(payload[IDLENGTH]), PAYLOADLENGTH - IDLENGTH);
 	temp[PAYLOADLENGTH - IDLENGTH] = '\0';
@@ -199,17 +203,19 @@ int checkReceivedPayload()
 		printf("[ERROR] Mktime can not translate tm.");
 		exit(EXIT_FAILURE);
 	}
-	struct timeval tv = {t, 0};
-	if (settimeofday(&tv, (struct timezone *)0) < 0)
+	if (t > lastWuPTime)
 	{
-		printf("[ERROR] Set system datetime error!\n");
-		exit(EXIT_FAILURE);
+		struct timeval tv = {t, 0};
+		if (settimeofday(&tv, (struct timezone *)0) < 0)
+		{
+			printf("[ERROR] Set system datetime error!\n");
+			exit(EXIT_FAILURE);
+		}
+
+		FILE *fptr = fopen("/home/pi/wakedRecord.csv","a");
+		fprintf(fptr,"%s\n", temp);
+		fclose(fptr);
 	}
-
-	FILE *fptr = fopen("/home/pi/wakedRecord.csv","a");
-	fprintf(fptr,"%s\n", temp);
-	fclose(fptr);
-
 	return 1;
 }
 
