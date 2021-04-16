@@ -26,13 +26,20 @@ for i in rfwait rfwait2 getStatus cleanFIFO testMode readReg; do
 done
 
 # compile cpp code
-for i in rfwakes rfrespond; do
+for i in rfwakes; do
     echo [... installing $i];
     g++ $i.cpp rfm69bios.o -o $i -lwiringPi;
     chown root:root $i;
     chmod 0755 $i;
     mv $i /usr/local/bin/;
 done
+
+# Compile rfrespomd with pthread
+echo [... installing rfrespond];
+g++ rfrespond.cpp rfm69bios.o -o rfrespond -lwiringPi -pthread;
+chown root:root rfrespond;
+chmod 0755 rfrespond;
+mv rfrespond /usr/local/bin/;
 
 popd
 

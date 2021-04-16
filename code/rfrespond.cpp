@@ -13,27 +13,32 @@ of the License, or (at your option) any later version.
 #include <string.h>
 #include <time.h>
 #include <sys/time.h>
+#include <sys/wait.h>
 // C++ Lib
 #include <sstream>
 #include <ctime>
 #include <iomanip>
 #include <iostream>
+#include <thread>
 
 #include "rfm69bios.h"
 #include "setConfig.h"
 
-// #define REMOTE_RFID 0x06
-// #define PAYLOADLENGTH 20
+#define iotClientTime 20
+#define bootDelay 12
+
 void readConfig(char const *fileName, char clist[2][30]);
 int checkReceivedPayload();
 void printAckMsg();
 void rxAndResetLoop();
 void txAndModeReady();
 void sendACK();
+void iotClientTask();
 
 int fdspi, gpio, mode, nbr = 1, random_coef, ack_times;
 unsigned char locrfid[IDSIZE], remrfid[IDSIZE];
-time_t lastWuPTime = 0;
+time_t lastWupTime = 0;
+bool tcpNeedRestart = false;
 
 int main(int argc, char *argv[])
 {
@@ -114,6 +119,9 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
+	// ***********************************
+	// Received WuR while RPi was sleeping
+	// ***********************************
 	if ((mode & 0x02) == 0x02)
 	{
 		fprintf(stdout, "[DEBUG] Received WuR while RPi was sleeping\n");
@@ -129,11 +137,20 @@ int main(int argc, char *argv[])
 		if (checkReceivedPayload())
 		{
 			printAckMsg();
-			// *** Send ACK ***
+			// This timestamp was not received.
+			if (tcpNeedRestart)
+			{
+				tcpNeedRestart = false;
+				std::thread{iotClientTask}.detach();
+			}
+			// Send ACK to drone
 			sendACK();
 		}
 	}
 
+	// *********************************
+	// Received WuR while RPi is running
+	// *********************************
 	while (1)
 	{
 		if (rfm69STDBYMode(locrfid))
@@ -157,7 +174,14 @@ int main(int argc, char *argv[])
 		if (checkReceivedPayload())
 		{
 			printAckMsg();
-			// *** Send ACK ***
+			// This timestamp was not received.
+			if (tcpNeedRestart)
+			{
+				sleep(bootDelay);	// Simulate RPi wake up time
+				tcpNeedRestart = false;
+				std::thread{iotClientTask}.detach();
+			}
+			// Send ACK to drone
 			sendACK();
 		}
 	}
@@ -165,7 +189,10 @@ int main(int argc, char *argv[])
 	usleep(85);
 	close(fdspi);
 	fclose(stdout);
+	//  iotClientTask();
+
 	exit(EXIT_SUCCESS);
+
 }
 
 int checkReceivedPayload()
@@ -174,14 +201,13 @@ int checkReceivedPayload()
 	unsigned char payload[PAYLOADLENGTH];
 	memset(payload, 0, PAYLOADLENGTH);
 	rfm69rxdata(payload, PAYLOADLENGTH); // skip last byte of called RF ID
-	fprintf(stdout, "[INFO] Received payload:");
+	fprintf(stdout, "\n[INFO] Received payload:");
 	for (int j = 0; j < IDLENGTH; j++)
 		printf("%02x:", payload[j]);
 	for (int j = IDLENGTH; j < PAYLOADLENGTH; j++)
 		printf("%c", payload[j]);
 	printf(".\n");
 
-	fprintf(stdout, "\n");
 	for (int i = 1; i < IDLENGTH; i++)
 	{
 		if (payload[i] != locrfid[IDSIZE - 1])
@@ -206,8 +232,9 @@ int checkReceivedPayload()
 		printf("[ERROR] Mktime can not translate tm.");
 		exit(EXIT_FAILURE);
 	}
-	if (t > lastWuPTime)
+	if (t > lastWupTime)
 	{
+		lastWupTime = t;
 		struct timeval tv = {t, 0};
 		if (settimeofday(&tv, (struct timezone *)0) < 0)
 		{
@@ -218,6 +245,8 @@ int checkReceivedPayload()
 		FILE *fptr = fopen("/home/pi/wakedRecord.csv", "a");
 		fprintf(fptr, "%s\n", temp);
 		fclose(fptr);
+
+		tcpNeedRestart = true;
 	}
 	return 1;
 }
@@ -348,4 +377,52 @@ void sendACK()
 		if ((mode & 0x02) == 0)
 			break;
 	}
+}
+
+void iotClientTask()
+{
+	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
+	int count;
+	while ( std::chrono::duration<double>(std::chrono::system_clock::now() - startTime).count() < iotClientTime)
+	{
+		pid_t fork_pid = 0;
+		count = 0;
+		while ((fork_pid = fork()) < 0)
+		{
+			int status;
+			pid_t pid = waitpid(-1, &status, 0);
+			if (count++ > 100)
+			{
+				printf("[ERROR] Can not fork IoTClient\n");
+				exit(EXIT_FAILURE);
+			}
+		}
+		if (!fork_pid) // This is child
+		{
+			char tmp[] = "/home/pi/Desktop/IoT-Wake-Up-Radio/IoTClient /home/pi/Desktop/IoT-Wake-Up-Radio/1kb ";
+			char *tmpArgv[3];
+			tmpArgv[0] = strtok(tmp, " ");
+			tmpArgv[1] = strtok(NULL, " \n");
+			tmpArgv[2] = NULL;
+	
+			close(0);
+			close(1);
+			close(2);
+			execvp("/home/pi/Desktop/IoT-Wake-Up-Radio/IoTClient", tmpArgv);
+		}
+		else
+		{
+			usleep(100000);	// sleep 0.1 seconds
+			int status;
+			waitpid(fork_pid, &status, 0);
+			if ( WIFEXITED(status) ) {
+				if (WEXITSTATUS(status) == 0)
+				{
+					printf("[DEBUG] Succefully create TCP connection\n");
+					return;
+				}
+			}
+		}
+	}
+	printf("[DEBUG] Fail to create TCP connection\n");
 }
