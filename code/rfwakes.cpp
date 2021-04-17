@@ -232,7 +232,7 @@ int main(int argc, char* argv[]) {
 			// When it is interrupted by rfm, write something to self_pipe to stop sleeping
 			struct timeval delay;
 			delay.tv_sec = 0;
-			delay.tv_usec = 80000; // 80 ms = 100 * 80 us (time for a packet)
+			delay.tv_usec = 136000; // 136 ms = 100 * 1.36 ms (time for a packet)
 			select(self_pipe_fd[0] + 1, &rfds,NULL, NULL, &delay);
 			close(self_pipe_fd[0]);
 			close(self_pipe_fd[1]);

@@ -26,6 +26,7 @@ of the License, or (at your option) any later version.
 
 #define iotClientTime 20
 #define bootDelay 12
+#define stdbyModeDelay 20
 
 void readConfig(char const *fileName, char clist[2][30]);
 int checkReceivedPayload();
@@ -131,7 +132,7 @@ int main(int argc, char *argv[])
 			fprintf(stdout, "[ERROR] Fail to enter STDBY Mode\n");
 			exit(EXIT_FAILURE);
 		}
-		usleep(20);
+		usleep(stdbyModeDelay);
 
 		// read remote RF ID from FIFO
 		if (checkReceivedPayload())
@@ -158,7 +159,7 @@ int main(int argc, char *argv[])
 			fprintf(stdout, "[ERROR] Fail to enter STDBY Mode\n");
 			exit(EXIT_FAILURE);
 		}
-		usleep(20);
+		usleep(stdbyModeDelay);
 
 		// Wait for Wake Up Packet
 		rxAndResetLoop();
@@ -168,7 +169,7 @@ int main(int argc, char *argv[])
 			fprintf(stdout, "[ERROR] Fail to enter STDBY Mode\n");
 			exit(EXIT_FAILURE);
 		}
-		usleep(20);
+		usleep(stdbyModeDelay);
 
 		// read remote RF ID from FIFO
 		if (checkReceivedPayload())
@@ -353,11 +354,11 @@ void sendACK()
 			exit(EXIT_FAILURE);
 		}
 		// Check for CRC_Ok state
-		int count = 10;
+		int count = 11;		// Gurantee drone can send at least 2 wake-up pakcet
 		do
 		{
 			rfm69restartRx();
-			usleep(86000);
+			usleep(27200); 	// 27.2ms = 20 * 1.36ms
 			mode = rfm69getState();
 			if (mode < 0)
 			{
@@ -371,7 +372,7 @@ void sendACK()
 			fprintf(stdout, "[ERROR] Fail to enter STDBY Mode\n");
 			exit(EXIT_FAILURE);
 		}
-		usleep(20);
+		usleep(stdbyModeDelay);
 
 		// TimeOut, receiver stop sending WuP
 		if ((mode & 0x02) == 0)
