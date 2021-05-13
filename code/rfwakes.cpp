@@ -98,6 +98,9 @@ int main(int argc, char* argv[]) {
 		fprintf(stdout, "[DEBUG] Round or distance is not number\n");
 		exit(EXIT_FAILURE);
 	}
+
+	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
+
 	// *****************
 	// *** IoTServer ***
 	// *****************
@@ -110,16 +113,21 @@ int main(int argc, char* argv[]) {
 	if (!fork_pid) // This is child
 	{
 
-		char tmp[70];
+		char tmp[100];
 		strcpy(tmp, "/home/pi/Desktop/IoT-Wake-Up-Radio/IoTServer ");
 		strcat(tmp, argv[1]);
 		strcat(tmp, " ");
 		strcat(tmp, argv[2]);
-		char *tmpArgv[4];
+		strcat(tmp, " ");
+		strcat(tmp, toTime(startTime));
+		strcat(tmp, "\n");
+	
+		char *tmpArgv[5];
 		tmpArgv[0] = strtok(tmp, " ");
 		tmpArgv[1] = strtok(NULL, " ");
-		tmpArgv[2] = strtok(NULL, " \n");
-		tmpArgv[3] = NULL;
+		tmpArgv[2] = strtok(NULL, " ");
+		tmpArgv[3] = strtok(NULL, "\n");
+		tmpArgv[4] = NULL;
 
 		close(0);
 		// close(1);
@@ -152,7 +160,6 @@ int main(int argc, char* argv[]) {
 	std::cout << "[DEBUG] Ouput Format: remote_RFID, round, distance, ACK_time, wake_time, elapsed_time" << std::endl;
 	std::cout << "[INFO] Start rfwakes at: Round " << round << ", " << toTime(std::chrono::system_clock::now()) << std::endl;
 
-	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
 
 	// Ouput wake-up time and wake-up target to file
 	{
