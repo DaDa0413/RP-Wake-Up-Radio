@@ -26,6 +26,7 @@
 #include <ctime>
 #include <iomanip>
 #include <string>
+#include <iostream>
 
 #include "rfm69bios.h"
 #include "mytime.h"
@@ -34,6 +35,7 @@
 #define LogDIR "/home/pi/Desktop/log/"
 
 int self_pipe_fd[2];
+const char* digit = "1234567890";
 
 void printrfid(unsigned char rfid[]) {
 	for (int i = 0; i < IDSIZE; i++) {
@@ -68,12 +70,12 @@ int main(int argc, char* argv[]) {
 	char targetFName[256];
 	if (argc == 4)
 	{  		
-		fprintf(stdout, "Now Usage: rfwakes fName round distance\n");
+		fprintf(stdout, "[DEBUG] Now Usage: rfwakes fName round distance\n");
 		strcpy(targetFName, "/home/pi/target/targetlist");
 	}
 	else if (argc == 5)
-	{  		
-		fprintf(stdout, "Now Usage: rfwakes fName round distance targetFile\n");
+	{
+		fprintf(stdout, "[DEBUG] Now Usage: rfwakes fName round distance targetFile\n");
 		strcpy(targetFName, "/home/pi/target/");
 		strcat(targetFName, argv[4]);
 
@@ -83,7 +85,13 @@ int main(int argc, char* argv[]) {
 		fprintf(stdout, "[ERROR] Usage: rfwakes fName round distance [targetFile]\n");
 		exit(EXIT_FAILURE);
 	}
-
+	// Check wrong argv
+	if (std::string(argv[2]).find_first_not_of(digit) != std::string::npos ||
+		std::string(argv[3]).find_first_not_of(digit) != std::string::npos)
+	{
+		fprintf(stdout, "[DEBUG] Round or distance is not number\n");
+		exit(EXIT_FAILURE);
+	}
 	// **************
 	// *** Config ***
 	// **************
@@ -102,12 +110,12 @@ int main(int argc, char* argv[]) {
 		}
 	}
 	gpio = atoi(config[1]);
-	fprintf(stdout, "Local RFID:%s, GPIO:%d\n",config[0] , gpio); 
+	fprintf(stdout, "[INFO] Local RFID:%s, GPIO:%d\n", config[0], gpio);
 
 	int round = atoi(argv[2]);
 	int distance = atoi(argv[3]);
-	std::cout << "Ouput Format: remote_RFID, round, distance, ACK_time, wake_time, elapsed_time" << std::endl;
-	std::cout << "Start rfwakes at: Round " <<  round << ", " << toTime(std::chrono::system_clock::now()) << std::endl;
+	std::cout << "[DEBUG] Ouput Format: remote_RFID, round, distance, ACK_time, wake_time, elapsed_time" << std::endl;
+	std::cout << "[INFO] Start rfwakes at: Round " << round << ", " << toTime(std::chrono::system_clock::now()) << std::endl;
 
 	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
 
@@ -130,7 +138,7 @@ int main(int argc, char* argv[]) {
 		for (i = 0, ap = it->rem; i < IDSIZE; i++, ap++) {
 			it->remrfid[i] = strtoul(ap,&ap,16);
 		}
-		fprintf(stdout, "Wake Remote RFID[%d]: ", ++counter);
+		fprintf(stdout, "[DEBUG] Wake Remote RFID[%d]: ", ++counter);
 		printrfid(it->remrfid);
 		//----------------------------------------------------------------------
 		fprintf(stdout, "\n");
@@ -195,7 +203,7 @@ int main(int argc, char* argv[]) {
 					exit(EXIT_FAILURE);
 				}
 			} while ((mode & 0x08) == 0);
-			fprintf(stdout, "%d. Wake-Telegram sent to %s.\n", nbr++, it->rem);
+			// fprintf(stdout, "%d. Wake-Telegram sent to %s.\n", nbr++, it->rem);
 
 			// switch back to STDBY Mode
 			if (rfm69STDBYMode(locrfid))
