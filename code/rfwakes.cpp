@@ -13,15 +13,16 @@
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
-#include <iostream>
-#include <fstream>
-#include <vector>
+#include <sys/wait.h>
+
 // TIME HEADER
 #include <chrono>
 #include <ctime>
 
 
 // C++ Lib
+#include <fstream>
+#include <vector>
 #include <sstream>
 #include <ctime>
 #include <iomanip>
@@ -36,6 +37,9 @@
 
 int self_pipe_fd[2];
 const char* digit = "1234567890";
+pid_t fork_pid = 0;
+int intReg = 1;
+int fd;
 
 void printrfid(unsigned char rfid[]) {
 	for (int i = 0; i < IDSIZE; i++) {
@@ -44,7 +48,6 @@ void printrfid(unsigned char rfid[]) {
 	}
 }
 
-int intReg = 1;
 void myInterrupt0(void) 
 {
 	if (!intReg) 
@@ -53,17 +56,20 @@ void myInterrupt0(void)
 		write(self_pipe_fd[1], "x", 1);	
 	}
 }
-int fd;
 
 void intHandler(int signo)
 {
 	fprintf(stdout, "Receive CTRL+C\n");
+	// kill(fork_pid, SIGINT);
 	close(fd);
 	exit(EXIT_SUCCESS);
 }
 
 int main(int argc, char* argv[]) {
 	signal(SIGINT, intHandler);
+	if (system("killall IoTServer --signal SIGINT") < 0)
+		fprintf(stdout, "[ERROR] Could not kill IoTServer\n");
+
 	std::vector <Target> Targetlist;
 	int mode;
 
@@ -92,6 +98,35 @@ int main(int argc, char* argv[]) {
 		fprintf(stdout, "[DEBUG] Round or distance is not number\n");
 		exit(EXIT_FAILURE);
 	}
+	// *****************
+	// *** IoTServer ***
+	// *****************
+	fork_pid = 0;
+	while ((fork_pid = fork()) < 0)
+	{
+		int status;
+		pid_t pid = waitpid(-1, &status, 0);
+	}
+	if (!fork_pid) // This is child
+	{
+
+		char tmp[70];
+		strcpy(tmp, "/home/pi/Desktop/IoT-Wake-Up-Radio/IoTServer ");
+		strcat(tmp, argv[1]);
+		strcat(tmp, " ");
+		strcat(tmp, argv[2]);
+		char *tmpArgv[4];
+		tmpArgv[0] = strtok(tmp, " ");
+		tmpArgv[1] = strtok(NULL, " ");
+		tmpArgv[2] = strtok(NULL, " \n");
+		tmpArgv[3] = NULL;
+
+		close(0);
+		// close(1);
+		// close(2);
+		execvp("/home/pi/Desktop/IoT-Wake-Up-Radio/IoTServer", tmpArgv);
+	}
+
 	// **************
 	// *** Config ***
 	// **************
@@ -129,7 +164,6 @@ int main(int argc, char* argv[]) {
 			<< "\",\"" << toTime(startTime) << "\"\r\n";
 		flog.close();
 	}
-
 
 	int counter = 0;
 	for(auto it = Targetlist.begin(); it != Targetlist.end(); it++) {
@@ -312,6 +346,6 @@ int main(int argc, char* argv[]) {
 
 
 	close(fd);
-
+	// kill(fork_pid, SIGINT);
 	exit(EXIT_SUCCESS);
 }
