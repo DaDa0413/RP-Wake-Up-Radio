@@ -1,5 +1,5 @@
 # Receive UDP packets transmitted by a
-broadcasting service
+# broadcasting service
 MYPORT = 50000
 import sys
 from socket import *

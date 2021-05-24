@@ -382,48 +382,117 @@ void sendACK()
 
 void iotClientTask()
 {
-	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
-	int count;
-	while ( std::chrono::duration<double>(std::chrono::system_clock::now() - startTime).count() < iotClientTime)
+	pid_t fork_pid = 0;
+	int count = 0;
+	while ((fork_pid = fork()) < 0)
 	{
-		pid_t fork_pid = 0;
-		count = 0;
-		while ((fork_pid = fork()) < 0)
+		int status;
+		pid_t pid = waitpid(-1, &status, 0);
+		if (count++ > 100)
 		{
-			int status;
-			pid_t pid = waitpid(-1, &status, 0);
-			if (count++ > 100)
+			printf("[ERROR] Can not fork ifup\n");
+			exit(EXIT_FAILURE);
+		}
+	}
+	if (!fork_pid) // This is child
+	{
+		char tmp[] = "ifup wlan1 ";
+		char *tmpArgv[3];
+		tmpArgv[0] = strtok(tmp, " ");
+		tmpArgv[1] = strtok(NULL, " \n");
+		tmpArgv[2] = NULL;
+
+		close(0);
+		close(1);
+		close(2);
+		execvp("", tmpArgv);
+	}
+	else
+	{
+		int status;
+		waitpid(fork_pid, &status, 0);
+		if ( WIFEXITED(status) ) {
+			if (WEXITSTATUS(status) == 0)
 			{
-				printf("[ERROR] Can not fork IoTClient\n");
-				exit(EXIT_FAILURE);
-			}
-		}
-		if (!fork_pid) // This is child
-		{
-			char tmp[] = "/home/pi/Desktop/IoT-Wake-Up-Radio/IoTClient /home/pi/Desktop/IoT-Wake-Up-Radio/1kb ";
-			char *tmpArgv[3];
-			tmpArgv[0] = strtok(tmp, " ");
-			tmpArgv[1] = strtok(NULL, " \n");
-			tmpArgv[2] = NULL;
-	
-			close(0);
-			close(1);
-			close(2);
-			execvp("/home/pi/Desktop/IoT-Wake-Up-Radio/IoTClient", tmpArgv);
-		}
-		else
-		{
-			usleep(100000);	// sleep 0.1 seconds
-			int status;
-			waitpid(fork_pid, &status, 0);
-			if ( WIFEXITED(status) ) {
-				if (WEXITSTATUS(status) == 0)
-				{
-					printf("[DEBUG] Succefully create TCP connection\n");
-					return;
-				}
+				printf("[DEBUG] Succefully ifup\n");
+				return;
 			}
 		}
 	}
-	printf("[DEBUG] Fail to create TCP connection\n");
+
+	fork_pid = 0;
+	count = 0;
+	while ((fork_pid = fork()) < 0)
+	{
+		int status;
+		pid_t pid = waitpid(-1, &status, 0);
+		if (count++ > 100)
+		{
+			printf("[ERROR] Can not fork IoTClient\n");
+			exit(EXIT_FAILURE);
+		}
+	}
+	if (!fork_pid) // This is child
+	{
+		char tmp[] = "python /home/pi/Desktop/RP-Wake-Up-Radio/client.py ";
+		char *tmpArgv[3];
+		tmpArgv[0] = strtok(tmp, " ");
+		tmpArgv[1] = strtok(NULL, " \n");
+		tmpArgv[2] = NULL;
+
+		close(0);
+		close(1);
+		close(2);
+		execvp("", tmpArgv);
+	}
+	else
+	{
+		int status;
+		waitpid(fork_pid, &status, 0);
+		if ( WIFEXITED(status) ) {
+			if (WEXITSTATUS(status) == 0)
+			{
+				printf("[DEBUG] Succefully send UDP\n");
+				return;
+			}
+		}
+	}
+
+	fork_pid = 0;
+	count = 0;
+	while ((fork_pid = fork()) < 0)
+	{
+		int status;
+		pid_t pid = waitpid(-1, &status, 0);
+		if (count++ > 100)
+		{
+			printf("[ERROR] Can not fork ifdown\n");
+			exit(EXIT_FAILURE);
+		}
+	}
+	if (!fork_pid) // This is child
+	{
+		char tmp[] = "ifdown wlan1 ";
+		char *tmpArgv[3];
+		tmpArgv[0] = strtok(tmp, " ");
+		tmpArgv[1] = strtok(NULL, " \n");
+		tmpArgv[2] = NULL;
+
+		close(0);
+		close(1);
+		close(2);
+		execvp("", tmpArgv);
+	}
+	else
+	{
+		int status;
+		waitpid(fork_pid, &status, 0);
+		if ( WIFEXITED(status) ) {
+			if (WEXITSTATUS(status) == 0)
+			{
+				printf("[DEBUG] Succefully ifdown\n");
+				return;
+			}
+		}
+	}
 }
