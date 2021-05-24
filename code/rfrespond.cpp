@@ -415,7 +415,6 @@ void iotClientTask()
 			if (WEXITSTATUS(status) == 0)
 			{
 				printf("[DEBUG] Succefully ifup\n");
-				return;
 			}
 		}
 	}
@@ -453,7 +452,6 @@ void iotClientTask()
 			if (WEXITSTATUS(status) == 0)
 			{
 				printf("[DEBUG] Succefully send UDP\n");
-				return;
 			}
 		}
 	}
