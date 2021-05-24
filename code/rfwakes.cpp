@@ -14,6 +14,7 @@
 #include <string.h>
 #include <signal.h>
 #include <sys/wait.h>
+#include <sys/time.h>
 
 // TIME HEADER
 #include <chrono>
@@ -67,7 +68,7 @@ void intHandler(int signo)
 
 int main(int argc, char* argv[]) {
 	signal(SIGINT, intHandler);
-	if (system("killall IoTServer --signal SIGINT") < 0)
+	if (system("pkill -9 -f server.py") < 0)
 		fprintf(stdout, "[ERROR] Could not kill IoTServer\n");
 
 	std::vector <Target> Targetlist;
@@ -112,27 +113,31 @@ int main(int argc, char* argv[]) {
 	}
 	if (!fork_pid) // This is child
 	{
+		struct timeval te;
+	    	gettimeofday(&te, NULL); // get current time
+ 	       	long long seconds = te.tv_sec + te.tv_usec / 1000000; // calculate milliseconds
 
 		char tmp[100];
-		strcpy(tmp, "/home/pi/Desktop/IoT-Wake-Up-Radio/IoTServer ");
+		strcpy(tmp, "python /home/pi/Desktop/RP-Wake-Up-Radio/server.py ");
 		strcat(tmp, argv[1]);
 		strcat(tmp, " ");
 		strcat(tmp, argv[2]);
 		strcat(tmp, " ");
-		strcat(tmp, toTime(startTime));
+		strcat(tmp, std::to_string(seconds).c_str());
 		strcat(tmp, "\n");
 	
 		char *tmpArgv[5];
 		tmpArgv[0] = strtok(tmp, " ");
 		tmpArgv[1] = strtok(NULL, " ");
 		tmpArgv[2] = strtok(NULL, " ");
-		tmpArgv[3] = strtok(NULL, "\n");
-		tmpArgv[4] = NULL;
+		tmpArgv[3] = strtok(NULL, " ");
+		tmpArgv[4] = strtok(NULL, "\n");
+		tmpArgv[5] = NULL;
 
 		close(0);
 		// close(1);
 		// close(2);
-		execvp("/home/pi/Desktop/IoT-Wake-Up-Radio/IoTServer", tmpArgv);
+		execvp("python", tmpArgv);
 	}
 
 	// **************
