@@ -405,7 +405,7 @@ void iotClientTask()
 		close(0);
 		close(1);
 		close(2);
-		execvp("", tmpArgv);
+		execvp("ifup", tmpArgv);
 	}
 	else
 	{
@@ -442,7 +442,7 @@ void iotClientTask()
 		close(0);
 		close(1);
 		close(2);
-		execvp("", tmpArgv);
+		execvp("python", tmpArgv);
 	}
 	else
 	{
@@ -479,7 +479,7 @@ void iotClientTask()
 		close(0);
 		close(1);
 		close(2);
-		execvp("", tmpArgv);
+		execvp("ifdown", tmpArgv);
 	}
 	else
 	{
