@@ -178,7 +178,7 @@ int main(int argc, char *argv[])
 			// This timestamp was not received.
 			if (tcpNeedRestart)
 			{
-				sleep(bootDelay);	// Simulate RPi wake up time
+				// sleep(bootDelay);	// Simulate RPi wake up time
 				tcpNeedRestart = false;
 				std::thread{iotClientTask}.detach();
 			}
