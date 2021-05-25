@@ -79,13 +79,13 @@ int main(int argc, char* argv[]) {
 	{  		
 		fprintf(stdout, "[DEBUG] Now Usage: rfwakes fName round distance\n");
 		strcpy(targetFName, "/home/pi/target/targetlist");
+		Targetlist = readTargets(targetFName);
 	}
 	else if (argc == 5)
 	{
 		fprintf(stdout, "[DEBUG] Now Usage: rfwakes fName round distance targetFile\n");
-		strcpy(targetFName, "/home/pi/target/");
-		strcat(targetFName, argv[4]);
-
+		strcpy(targetFName, argv[4]);
+		Targetlist = readTargetsByID(targetFName);
 	}
 	else
 	{  		
@@ -145,7 +145,6 @@ int main(int argc, char* argv[]) {
 	// **************
 	char config[2][30];
 	readConfig("/home/pi/myConfig", config); 
-	Targetlist = readTargets(targetFName);
 	int gpio;
 	unsigned char locrfid[IDSIZE], recrfid[IDSIZE];
 

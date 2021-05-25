@@ -69,4 +69,31 @@ std::vector <Target> readTargets(char* targetFName){
 	return tlist;
 	//fprintf(stdout, "%s\n", tt);
 }
+
+std::vector<Target> readTargetsByID(char *targetFName)
+{
+	std::vector<Target> tlist;
+	char item[30] = {};
+	char buf[10];
+	char *temp = strtok(targetFName, "_");
+
+	strcpy(item, "11:11:11:11:11:11:11:");
+	sprintf(buf, "%2d", atoi(temp));
+	strcat(item, buf);
+	Target t;
+	strcpy(t.rem, item);
+	tlist.push_back(t);
+	memset(&item[0], 0, sizeof(item));
+	while ((temp = strtok(NULL, "_")) != NULL)
+	{
+		strcpy(item, "11:11:11:11:11:11:11:");
+		sprintf(buf, "%2d", atoi(temp));
+		strcat(item, buf);
+		Target t;
+		strcpy(t.rem, item);
+		tlist.push_back(t);
+		memset(&item[0], 0, sizeof(item));
+	}
+	return tlist;
+}
 #endif
