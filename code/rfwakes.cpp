@@ -112,7 +112,7 @@ int main(int argc, char* argv[]) {
 	}
 	if (!fork_pid) // This is child
 	{
-
+		
 		char tmp[100];
 		strcpy(tmp, "/home/pi/Desktop/IoT-Wake-Up-Radio/IoTServer ");
 		strcat(tmp, argv[1]);

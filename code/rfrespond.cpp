@@ -39,7 +39,9 @@ void iotClientTask();
 int fdspi, gpio, mode, nbr = 1, random_coef, ack_times;
 unsigned char locrfid[IDSIZE], remrfid[IDSIZE];
 time_t lastWupTime = 0;
+time_t lastTcpTime = 100;
 bool tcpNeedRestart = false;
+bool systemNeedSleep = false;
 
 int main(int argc, char *argv[])
 {
@@ -139,6 +141,10 @@ int main(int argc, char *argv[])
 		{
 			printAckMsg();
 			// This timestamp was not received.
+			if (systemNeedSleep)
+			{
+				systemNeedSleep = false;
+			}
 			if (tcpNeedRestart)
 			{
 				tcpNeedRestart = false;
@@ -176,9 +182,13 @@ int main(int argc, char *argv[])
 		{
 			printAckMsg();
 			// This timestamp was not received.
-			if (tcpNeedRestart)
+			if (systemNeedSleep)
 			{
 				sleep(bootDelay);	// Simulate RPi wake up time
+				systemNeedSleep = false;
+			}
+			if (tcpNeedRestart)
+			{
 				tcpNeedRestart = false;
 				std::thread{iotClientTask}.detach();
 			}
@@ -247,6 +257,11 @@ int checkReceivedPayload()
 		fprintf(fptr, "%s\n", temp);
 		fclose(fptr);
 
+		systemNeedSleep = true;
+	}
+	if (t > lastTcpTime)
+	{
+		lastTcpTime = t;
 		tcpNeedRestart = true;
 	}
 	return 1;
@@ -425,5 +440,6 @@ void iotClientTask()
 			}
 		}
 	}
+	lastTcpTime -= 1;
 	printf("[DEBUG] Fail to create TCP connection\n");
 }
